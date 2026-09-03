@@ -24,7 +24,7 @@ const email = z
 /** 허니팟 — 봇이 채우는 필드. 항상 빈 문자열이어야 함 (기술 스펙 §5) */
 const honeypot = z.string().max(0).optional().default("");
 
-// ── POST /api/diagnoses (기술 스펙 §4.1 + decisions.md D1) ──────────
+// ── POST /api/diagnoses (기술 스펙 §4.1 + docs/decisions.md D1) ──────────
 export const diagnosisSubmissionSchema = z.object({
   // 1단계 회사 정보
   companyName: z.string().trim().min(1, { error: "회사명을 입력해 주세요" }).max(100),

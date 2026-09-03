@@ -47,8 +47,8 @@ n8n Code 노드에서 이름을 명시적으로 변환한다. 세 네이밍이 �
 | `implementationSteps` | `implementation_steps` (text[]) |
 | `summary` | `ai_summary` |
 
-- `diagnosis_results.difficulty` 컬럼은 **없다** (decisions.md D4). 난이도는 `recommended_tasks` 안 업무별 `difficulty`(`낮음|중간|높음`)로만 존재한다.
-- 서비스 유형 자동 태깅은 이 워크플로우에서 하지 **않는다** — 상담 신청 시점에 Next.js `lib/serviceTagging.ts`가 계산한다 (decisions.md D3).
+- `diagnosis_results.difficulty` 컬럼은 **없다** (docs/decisions.md D4). 난이도는 `recommended_tasks` 안 업무별 `difficulty`(`낮음|중간|높음`)로만 존재한다.
+- 서비스 유형 자동 태깅은 이 워크플로우에서 하지 **않는다** — 상담 신청 시점에 Next.js `lib/serviceTagging.ts`가 계산한다 (docs/decisions.md D3).
 
 ## Webhook 페이로드 (Next.js → n8n)
 
@@ -60,4 +60,4 @@ repetitiveTasks[], dailyHours, staffCount, monthlyVolume, purpose,
 painPoint, budgetRange
 ```
 
-`staffCount`, `purpose`는 스펙 외 추가 필드(decisions.md D1) — PII가 아니므로 포함해 AI 분석 품질을 높인다.
+`staffCount`, `purpose`는 스펙 외 추가 필드(docs/decisions.md D1) — PII가 아니므로 포함해 AI 분석 품질을 높인다.

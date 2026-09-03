@@ -1,7 +1,7 @@
 # WEBAGENT.KR MVP — 전체 개발 계획 / 작업 관리
 
 > Living document. 작업 진행에 따라 체크박스 갱신·메모 추가·범위 조정.
-> 근거 문서: `개발자용_통합_MVP_기획서.md`(제품·사업), `개발_착수_기술_스펙.md`(구현), `CLAUDE.md`(구현 지침·스펙 결함 목록), `decisions.md`(미결 결정).
+> 근거 문서: `docs/개발자용_통합_MVP_기획서.md`(제품·사업), `docs/개발_착수_기술_스펙.md`(구현), `CLAUDE.md`(구현 지침·스펙 결함 목록), `docs/decisions.md`(확정 결정).
 
 ## Context
 
@@ -18,18 +18,18 @@
 - 앱은 리포 루트에 스캐폴딩(스펙의 `webagentkr-mvp/` 하위폴더 표기 무시). 기존 md 3개 보존.
 
 > ⚠️ 스펙 검토 결과 **22건의 결함**이 확인되었다. 전체 목록은 `CLAUDE.md`의 "Known spec defects" 표.
-> 그중 사용자 결정이 필요했던 **5건(D1~D5)은 2026-09-04 전원 확정** — `decisions.md` 참조.
+> 그중 사용자 결정이 필요했던 **5건(D1~D5)은 2026-09-04 전원 확정** — `docs/decisions.md` 참조.
 
 **D1~D5 확정 요약** (Phase 0에서 반영):
 - **D1** `diagnoses`에 `purpose`(도입 목적)·`staff_count`(담당 인원) 추가, **현재 처리 방식은 폼에서 제거**
-- **D2** 선택지는 한글 라벨 저장 + `lib/options.ts` 단일 정의 (`decisions.md` D2-b 목록 그대로)
+- **D2** 선택지는 한글 라벨 저장 + `lib/options.ts` 단일 정의 (`docs/decisions.md` D2-b 목록 그대로)
 - **D3** 서비스 태깅은 **상담 신청 시점 Next.js**(`lib/serviceTagging.ts`), n8n 아님
 - **D4** `diagnosis_results.difficulty` **컬럼 삭제**
 - **D5** Supabase **Free + cron `pg_dump`**, 첫 계약 성사 시 Pro 전환
 
 ## 현재 상태
 
-- [x] **결정 확정** — `decisions.md` D1~D5 (2026-09-04, 전원 권장안대로)
+- [x] **결정 확정** — `docs/decisions.md` D1~D5 (2026-09-04, 전원 권장안대로)
 - [x] Phase 0 — 1주차: 기반 구성  (2026-09-04 완료 · 검증 통과 · 커밋 완료)
 - [ ] Phase 1 — 2주차: 랜딩 + 진단 폼  ← **다음 착수 대상**
 - [ ] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)
@@ -42,7 +42,7 @@
 
 기술 스펙 §10 "1주차 완료 기준"을 코드로 채운다. 기능 로직은 이 페이즈 범위 밖(스텁만).
 
-- [x] **0.0 선행 결정** — `decisions.md` D1~D5 확정 완료(2026-09-04). 아래 각 항목에 반영됨.
+- [x] **0.0 선행 결정** — `docs/decisions.md` D1~D5 확정 완료(2026-09-04). 아래 각 항목에 반영됨.
 - [x] **0.1 스캐폴딩**
   - `npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias "@/*" --use-npm`
     - 스펙 §1의 `--src-dir=false`는 잘못된 플래그 → `--no-src-dir` (결함 #20)
@@ -225,7 +225,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 ## 변경 이력
 
 - 2026-09-03: 초기 계획 작성. 범위 = Phase 0(1주차 기반 구성). AI 제공자 OpenAI 확정, 백엔드 서비스 미구성(로컬 우선).
-- 2026-09-03: 전체 md 검토 반영. 스펙 결함 22건을 `CLAUDE.md`에 기록하고 각 페이즈에 해소 작업 배치. 선행 결정 5건을 `decisions.md`로 분리. Phase 0에 `options.ts`/`clientIp.ts`/Dockerfile/포트 바인딩, Phase 1에 경쟁 조건·웹훅 실패·중복 제출 대응, Phase 3에 이용약관·태깅 위치 수정 추가.
+- 2026-09-03: 전체 md 검토 반영. 스펙 결함 22건을 `CLAUDE.md`에 기록하고 각 페이즈에 해소 작업 배치. 선행 결정 5건을 `docs/decisions.md`로 분리. Phase 0에 `options.ts`/`clientIp.ts`/Dockerfile/포트 바인딩, Phase 1에 경쟁 조건·웹훅 실패·중복 제출 대응, Phase 3에 이용약관·태깅 위치 수정 추가.
 - 2026-09-04: **D1~D5 전원 권장안대로 확정.** 진단 폼에 도입 목적·담당 인원 추가하고 현재 처리 방식 제거, 선택지 한글 라벨 저장, 서비스 태깅을 상담 시점 Next.js로, `difficulty` 컬럼 삭제, 백업은 Free + cron `pg_dump`. Phase 0 착수 가능 상태.
 - 2026-09-04: **Phase 0 완료.** `create-next-app@latest`가 **Next.js 16.3.4 / React 19.2.8 / Tailwind v4 / zod 4.5**를 설치함(스펙·초기 계획의 "Next 15" 가정과 다름 — 스텁 수준에서는 영향 없음, `params`는 Promise·`PageProps`/`RouteContext`는 전역 생성 타입). shadcn 스타일 `base-nova`. 검증 결과: `next build` 성공(16 라우트), `eslint` 0건, `tsc --noEmit` 청정, `docker compose config` 유효(포트 `127.0.0.1` 바인딩 확인), `0001_init.sql`을 Postgres 16에 적용해 5테이블+RLS+정책6+트리거2 생성 및 CHECK/unique/트리거 동작 확인, `rateLimit`(6번째 차단·버킷 분리)·`clientIp`(cf 우선·xff 파싱·fallback) 유닛 통과. `git init` + 초기 커밋.
 

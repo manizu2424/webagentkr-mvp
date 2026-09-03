@@ -1,5 +1,5 @@
 /**
- * 폼 select 선택지의 단일 소스 (decisions.md D2).
+ * 폼 select 선택지의 단일 소스 (docs/decisions.md D2).
  *
  * ⚠️ 여기 문자열이 그대로 DB 에 저장된다. 라벨을 수정하면 기존 행과 어긋나므로
  *    데이터 마이그레이션이 필요하다. 폼 · zod(lib/validation.ts) · 서비스 태깅
@@ -60,7 +60,7 @@ export const OPTIONS = {
   // 하루 반복 업무 시간
   dailyHours: ["1시간 미만", "1~2시간", "2~4시간", "4~6시간", "6시간 이상"],
 
-  // 담당 인원 (decisions.md D1 추가)
+  // 담당 인원 (docs/decisions.md D1 추가)
   staffCount: ["1명", "2~3명", "4~5명", "6명 이상"],
 
   // 월간 처리 건수
@@ -73,7 +73,7 @@ export const OPTIONS = {
     "파악 못함",
   ],
 
-  // 도입 목적 (decisions.md D1 추가) — "방향성 파악"이 기획서 §11.3 의 AI Consulting 분기를 구동
+  // 도입 목적 (docs/decisions.md D1 추가) — "방향성 파악"이 기획서 §11.3 의 AI Consulting 분기를 구동
   purpose: [
     "업무 시간 절감",
     "인건비 절감",
@@ -92,7 +92,7 @@ export const OPTIONS = {
     "1,000만원 이상",
   ],
 
-  // 상담 방식 — leads.consulting_method / consultations.consultation_type 공용 (decisions.md D2-c)
+  // 상담 방식 — leads.consulting_method / consultations.consultation_type 공용 (docs/decisions.md D2-c)
   consultingMethod: ["전화", "온라인 미팅", "방문 상담", "이메일"],
 
   // 희망 상담 시기 — consultations.preferred_date (날짜 아닌 선택지 버킷)

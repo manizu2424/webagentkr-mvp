@@ -8,12 +8,12 @@ Phase 0(1주차 기반 구성) 완료. 다음은 Phase 1(랜딩 + 진단 폼). �
 
 **설치된 버전** (`create-next-app@latest` 결과): Next.js **16.3.4** (Turbopack) · React 19.2.8 · Tailwind **v4**(CSS 기반 설정, `tailwind.config` 없음) · zod **4.5** · shadcn 스타일 `base-nova`. 스펙/초기 계획의 "Next 15" 가정과 다르다. Next 16 유의점: `params`/`searchParams`는 Promise, `PageProps<'/route'>`·`LayoutProps<'/'>`·`RouteContext<'/route'>`는 `next build`/`next dev`가 생성하는 전역 타입, `next lint` 제거(→ `eslint` 직접). 상세는 `node_modules/next/dist/docs/` 및 `AGENTS.md`(이 파일 끝에서 `@AGENTS.md`로 임포트).
 
-코드가 채워지기 전까지는 아래 문서들이 최종 스펙이다:
+코드가 채워지기 전까지는 아래 문서들이 최종 스펙이다. 서술형 스펙/결정 문서는 `docs/`에 있고, 운영 파일(`CLAUDE.md`, `task.md`)만 루트에 둔다:
 
-- `개발자용_통합_MVP_기획서.md` — 제품·기능·사업 스펙("무엇을 왜 만드는가"). 0~19장.
-- `개발_착수_기술_스펙.md` — 기술 구현 스펙("무엇부터 타이핑할까"). 1~10장.
+- `docs/개발자용_통합_MVP_기획서.md` — 제품·기능·사업 스펙("무엇을 왜 만드는가"). 0~19장.
+- `docs/개발_착수_기술_스펙.md` — 기술 구현 스펙("무엇부터 타이핑할까"). 1~10장.
 - `task.md` — 전체 개발의 작업 추적 문서(living). 작업이 완료되면 체크박스를 갱신한다.
-- `decisions.md` — 스펙이 열어둔 결정 사항. D1~D5는 2026-09-04에 확정됨. 확정 결정은 구속력이 있으며, 스펙 원문과 충돌하면 결정을 우선한다.
+- `docs/decisions.md` — 스펙이 열어둔 결정 사항. D1~D5는 2026-09-04에 확정됨. 확정 결정은 구속력이 있으며, 스펙 원문과 충돌하면 결정을 우선한다.
 
 두 스펙 문서는 장 번호로 서로를 참조한다(예: 기술 스펙의 rate limit 절이 기획서 7.4를 인용). 결정이 애매할 때는 기술 스펙의 구체적 선택이 기획서의 상위 서술보다 우선한다. 다만 기획서 **0장(절대 원칙)**은 둘 다에 우선한다. **두 스펙 모두 알려진 결함이 있다 — 원문 그대로 구현하기 전에 아래 "알려진 스펙 결함"을 확인할 것.**
 
@@ -100,7 +100,7 @@ GET /api/diagnoses/[id]는 { status } 또는 (COMPLETED/FAILED 시) { status, re
 - §7.3 스키마는 작성된 그대로 유효하다 — OpenAI strict 모드는 현재 배열의 `minItems`/`maxItems`, 숫자의 `minimum`/`maximum`, 문자열의 `pattern`/`format`을 지원한다. (이 제약 키워드들은 파인튜닝 모델에서는 지원되지 *않는다*.)
 - n8n에서 AI 응답을 재검증하고, 실패 시 1회 재시도 후 `status=FAILED` + Telegram 알림.
 - AI는 최상위 필드 **6개**를 반환한다: `automationScore`, `priorityTasks`, `totalEstimatedSavedHours`, `recommendedStack`, `implementationSteps`, `summary`. 폴백 계획: 핵심 4개(점수, 우선 업무, 절감 시간, 요약)만 먼저 안정화.
-- `priorityTasks[].difficulty` enum 값은 한국어다: `낮음 | 중간 | 높음`. 이는 **업무별** 필드다 — 최상위 난이도는 없다. `diagnosis_results.difficulty` 컬럼은 decisions.md D4에 따라 **삭제**한다.
+- `priorityTasks[].difficulty` enum 값은 한국어다: `낮음 | 중간 | 높음`. 이는 **업무별** 필드다 — 최상위 난이도는 없다. `diagnosis_results.difficulty` 컬럼은 docs/decisions.md D4에 따라 **삭제**한다.
 
 #### AI 필드 ↔ DB 컬럼 ↔ API 응답 매핑
 
@@ -125,7 +125,7 @@ AI 결과로부터 `consultations.suggested_service_type`(5종 중 하나)를 �
 
 스펙의 세 절이 이게 어디서 실행되는지에 대해 서로 모순된다(기획서 §11.3은 진단 시점의 n8n, 기술 스펙 §4.3은 "`diagnoses`에서 읽어와"이지만 그런 컬럼이 없음, 기술 스펙 §6의 노드 목록에는 아예 없음). 진단 시점에는 `consultations` 행이 아직 없으므로 진단 시점 실행은 불가능하다.
 
-**해결 (decisions.md D3):** `POST /api/consultations`에서 `lib/serviceTagging.ts`로 `diagnosis_results`를 읽어 계산한다. n8n 워크플로우에 태깅 노드를 **추가하지 않는다**. 규칙은 도입 목적으로 분기하며, 이 값은 이제 `diagnoses.purpose`(decisions.md D1)에 저장된다 — `"방향성 파악 (무엇부터 할지 모름)"` 옵션이 AI Consulting 분기를 구동한다.
+**해결 (docs/decisions.md D3):** `POST /api/consultations`에서 `lib/serviceTagging.ts`로 `diagnosis_results`를 읽어 계산한다. n8n 워크플로우에 태깅 노드를 **추가하지 않는다**. 규칙은 도입 목적으로 분기하며, 이 값은 이제 `diagnoses.purpose`(docs/decisions.md D1)에 저장된다 — `"방향성 파악 (무엇부터 할지 모름)"` 옵션이 AI Consulting 분기를 구동한다.
 
 ### GA4 이벤트는 P0
 
@@ -136,7 +136,7 @@ AI 결과로부터 `consultations.suggested_service_type`(5종 중 하나)를 �
 - `docker-compose.yml`은 Contabo VPS에서 **web + n8n + nginx-proxy-manager**를 구동한다. Nginx Proxy Manager(관리 UI는 포트 81)가 리버스 프록시 + Let's Encrypt를 담당한다.
 - **서비스 포트를 `127.0.0.1`에 바인딩한다.** 스펙의 compose는 `3000`, `5678`, `81`을 `0.0.0.0`에 공개한다. n8n은 OpenAI와 Supabase service-role 자격증명을 보유하므로, TLS 없이 `5678`을 인터넷에 노출하는 게 셋 중 최악이다. 80/443만 도달 가능해야 한다.
 - Supabase는 **클라우드 관리형**을 유지하며 의도적으로 compose 파일에 넣지 않는다 — DB만 빼고 전부 self-host하는 비대칭 구성은 VPS 장애 시에도 리드 데이터가 살아남게 하기 위한 것이다. Supabase 스택의 self-host를 제안하지 않는다.
-- 백업은 P0 항목이지만 Supabase **Free 플랜에는 자동 백업이 없다** — 스펙의 "플랜에 따라 일 단위"는 이를 얼버무린다. **해결 (decisions.md D5):** Free를 유지하고 Contabo VPS에서 일 1회 `pg_dump` cron(7일 로테이션, 오프사이트 복사). 첫 계약 성사 시 Pro로 전환. 덤프뿐 아니라 복원 경로까지 검증해야 한다.
+- 백업은 P0 항목이지만 Supabase **Free 플랜에는 자동 백업이 없다** — 스펙의 "플랜에 따라 일 단위"는 이를 얼버무린다. **해결 (docs/decisions.md D5):** Free를 유지하고 Contabo VPS에서 일 1회 `pg_dump` cron(7일 로테이션, 오프사이트 복사). 첫 계약 성사 시 Pro로 전환. 덤프뿐 아니라 복원 경로까지 검증해야 한다.
 - n8n 워크플로우는 `n8n/workflows/*.json`으로 export해 버전 관리 / 재해 복구용으로 커밋한다.
 - n8n 환경변수(`N8N_ENCRYPTION_KEY`, `NODE_FUNCTION_ALLOW_EXTERNAL` 등)는 Next.js `.env`와 분리해야 한다(기술 스펙 §2). compose의 `${VAR}` 보간은 기본적으로 `./.env`를 읽으므로, n8n 컨테이너에는 별도 `n8n.env`를 `env_file:`로 넘긴다.
 - Next.js 컨테이너용 `Dockerfile`은 스펙에 없어 새로 작성한다(standalone 멀티스테이지).
@@ -145,13 +145,13 @@ AI 결과로부터 `consultations.suggested_service_type`(5종 중 하나)를 �
 ## 규약
 
 - 사용자에게 보이는 문구, 폼 옵션 값, 여러 DB enum이 **한국어**다. enum 문자열은 합의된 그대로 유지한다(`<select>` 옵션과 1:1로 맞아야 함 — 예: `employee_count`는 `"5-10명"` 같은 구간 문자열을 저장).
-- **두 스펙 모두 `industry`, `employee_count`, `website_status`, `daily_hours`, `staff_count`, `monthly_volume`, `purpose`, `budget_range`, `consulting_method`, `consultation_type`, `preferred_date`의 select 옵션 값을 정의하지 않는다** — `current_tools`와 `repetitive_tasks`만 열거되어 있다(기획서 §7). **해결 (decisions.md D2):** 합의된 한국어 라벨은 `decisions.md` §D2-b에 있으며, `lib/options.ts`에 단일 소스로 옮긴다. 폼, zod 스키마, 서비스 태깅, AI 프롬프트가 전부 `lib/options.ts`에서 읽는다 — 라벨을 하드코딩하지 말고, 새로 만들지도 않는다. 라벨 문자열이 곧 저장되는 값이므로, 하나를 수정하면 데이터 마이그레이션이 필요하다.
-- 스펙 스키마 외에 필드 2개가 추가되었다(decisions.md D1): `diagnoses.purpose`(도입 목적)와 `diagnoses.staff_count`(담당 인원). 둘 다 PII가 아니라 업무 데이터이므로 n8n webhook 페이로드와 AI 프롬프트에 포함한다. 기획서 §7의 "현재 처리 방식"은 사용 도구와 중복이라 제거했다.
+- **두 스펙 모두 `industry`, `employee_count`, `website_status`, `daily_hours`, `staff_count`, `monthly_volume`, `purpose`, `budget_range`, `consulting_method`, `consultation_type`, `preferred_date`의 select 옵션 값을 정의하지 않는다** — `current_tools`와 `repetitive_tasks`만 열거되어 있다(기획서 §7). **해결 (docs/decisions.md D2):** 합의된 한국어 라벨은 `docs/decisions.md` §D2-b에 있으며, `lib/options.ts`에 단일 소스로 옮긴다. 폼, zod 스키마, 서비스 태깅, AI 프롬프트가 전부 `lib/options.ts`에서 읽는다 — 라벨을 하드코딩하지 말고, 새로 만들지도 않는다. 라벨 문자열이 곧 저장되는 값이므로, 하나를 수정하면 데이터 마이그레이션이 필요하다.
+- 스펙 스키마 외에 필드 2개가 추가되었다(docs/decisions.md D1): `diagnoses.purpose`(도입 목적)와 `diagnoses.staff_count`(담당 인원). 둘 다 PII가 아니라 업무 데이터이므로 n8n webhook 페이로드와 AI 프롬프트에 포함한다. 기획서 §7의 "현재 처리 방식"은 사용 도구와 중복이라 제거했다.
 - `zod` 스키마는 `lib/validation.ts`에 두며, 기술 스펙 §4에 문서화된 API 라우트 요청 바디의 공유 계약이다.
 
 ## 알려진 스펙 결함
 
-원본 스펙에서 확인된 문제들. 재현하지 말 것. 수정 방향은 위에 기술되어 있고 `task.md`에서 추적한다. **resolved Dn**으로 표시된 행은 `decisions.md`의 확정 결정으로 정리되었으며 — 그 결정이 스펙 원문에 우선한다.
+원본 스펙에서 확인된 문제들. 재현하지 말 것. 수정 방향은 위에 기술되어 있고 `task.md`에서 추적한다. **resolved Dn**으로 표시된 행은 `docs/decisions.md`의 확정 결정으로 정리되었으며 — 그 결정이 스펙 원문에 우선한다.
 
 | # | 위치 | 문제 |
 |---|---|---|
