@@ -1,0 +1,51 @@
+# WEBAGENT.KR — Contabo VPS 배포 구성 (기술 스펙 §8)
+# Supabase 는 포함하지 않는다 — 클라우드 관리형 유지 (기획서 §15.2).
+#
+# 스펙과의 차이:
+#   결함 #4  web(3000)·n8n(5678)·NPM 관리 UI(81) 를 127.0.0.1 에만 바인딩한다.
+#            외부에 여는 건 NPM 의 80/443 뿐. n8n 은 OpenAI·Supabase service_role 키를
+#            보유하므로 TLS 없이 인터넷에 노출하면 안 된다. 관리 UI 는 SSH 터널로 접근.
+#   결함 #16 n8n 컨테이너 설정은 .env 가 아니라 n8n.env 로 분리한다.
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        # 배포 시 실제 값 주입 — NEXT_PUBLIC_* 는 빌드 시점에 인라인된다 (Dockerfile 참조)
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        NEXT_PUBLIC_GA4_MEASUREMENT_ID: ${NEXT_PUBLIC_GA4_MEASUREMENT_ID:-}
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    env_file:
+      - path: n8n.env
+        required: false
+    volumes:
+      - n8n_data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:5678:5678"
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:81:81" # 관리 UI — SSH 터널로만 접근
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+
+volumes:
+  n8n_data:
+  npm_data:
+  npm_letsencrypt:

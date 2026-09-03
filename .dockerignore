@@ -1,0 +1,27 @@
+node_modules
+.next
+.git
+.github
+.vscode
+
+# 문서 — 이미지에 불필요
+*.md
+개발_착수_기술_스펙.md
+개발자용_통합_MVP_기획서.md
+
+# 시크릿 (예시 템플릿만 이미지에 넣지 않음)
+.env
+.env.*
+n8n.env
+n8n.env.*
+
+# 배포/DB/자동화 정의 — 앱 빌드와 무관
+Dockerfile
+docker-compose.yml
+.dockerignore
+supabase
+n8n
+
+# 로그
+npm-debug.log*
+*.tsbuildinfo
