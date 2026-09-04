@@ -33,7 +33,11 @@
 - [x] Phase 0 — 1주차: 기반 구성  (2026-09-04 완료 · 검증 통과 · 커밋 완료)
 - [ ] Phase 1 — 2주차: 랜딩 + 진단 폼
   - [x] 1.1 랜딩페이지 (2026-09-04 · frontend-design · 라이트 전용 · 반응형)
-  - [ ] 1.2~1.7 진단 폼 + `POST /api/diagnoses`  ← **다음 착수 대상**
+  - [ ] 1.2~1.7 진단 폼 + `POST /api/diagnoses`  ← **진행 중** (브랜치 `feat/diagnosis-form`)
+    - 스펙: `docs/superpowers/specs/2026-09-04-diagnosis-form-submit-api-design.md`
+    - 계획: `docs/superpowers/plans/2026-09-04-diagnosis-form-submit-api.md` (9 태스크, SDD 실행)
+    - 진행: Task 1(마이그레이션 0002) 완료·리뷰 통과(`c666a73`). Task 2(validation 스키마) 착수. Task 3~9 대기.
+    - SDD 원장: `.superpowers/sdd/2026-09-04-diagnosis-form-submit-api/progress.md`
 - [ ] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)
 - [ ] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4
 - [ ] Phase 4 — 지속(P1): 출시 마무리
