@@ -46,6 +46,28 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* ── 마케팅(랜딩) 전용 토큰 — components/marketing/* 에서만 사용, 라이트 전용 ── */
+  --color-paper: var(--wak-paper);
+  --color-panel: var(--wak-panel);
+  --color-ink: var(--wak-ink);
+  --color-ink-soft: var(--wak-ink-soft);
+  --color-line: var(--wak-line);
+  --color-signal: var(--wak-signal);
+  --color-resolved: var(--wak-resolved);
+  --font-display: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui,
+    sans-serif;
+  --font-flow: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+:root {
+  --wak-paper: #f5f6f2;
+  --wak-panel: #ffffff;
+  --wak-ink: #16292b;
+  --wak-ink-soft: #566b6d;
+  --wak-line: #cdd5ce;
+  --wak-signal: #1f3ce6;
+  --wak-resolved: #0c8b77;
 }
 
 :root {
@@ -126,5 +148,29 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* 랜딩 히어로 파이프라인 — 로드 시 신호 1회 통과 (frontend-design: 한 번의 연출된 순간) */
+@keyframes wak-signal {
+  0% {
+    transform: translateY(-2.5rem);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(26rem);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wak-signal {
+    animation: wak-signal 1.9s cubic-bezier(0.33, 0, 0.2, 1) 0.35s 1 both;
   }
 }

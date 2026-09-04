@@ -1,9 +1,32 @@
-// [스텁] 홈 — Phase 1.1 / 기획서 §5 에서 구현 예정 (task.md)
-export default function Page() {
+import { Hero } from "@/components/marketing/hero";
+import { Problems } from "@/components/marketing/problems";
+import { BeforeAfter } from "@/components/marketing/before-after";
+import { Services } from "@/components/marketing/services";
+import { Demos } from "@/components/marketing/demos";
+import { MidCta, FinalCta } from "@/components/marketing/cta-band";
+import { Process } from "@/components/marketing/process";
+import { Trust } from "@/components/marketing/trust";
+import { Faq } from "@/components/marketing/faq";
+
+export default function Home() {
   return (
-    <main className="p-8">
-      <h1 className="text-xl font-semibold">홈</h1>
-      <p className="text-sm text-neutral-500">스텁 페이지 · Phase 1.1 / 기획서 §5</p>
-    </main>
+    <div className="relative mx-auto max-w-[1120px] px-5 pb-8 sm:px-8 lg:pr-8 lg:pl-16">
+      {/* 커넥터 스파인 — 페이지 전체를 관통하는 워크플로 백본 (lg 이상) */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-8 hidden w-px bg-line lg:block"
+      />
+
+      <Hero />
+      <Problems />
+      <BeforeAfter />
+      <Services />
+      <Demos />
+      <MidCta />
+      <Process />
+      <Trust />
+      <Faq />
+      <FinalCta />
+    </div>
   );
 }

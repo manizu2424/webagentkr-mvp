@@ -31,7 +31,9 @@
 
 - [x] **결정 확정** — `docs/decisions.md` D1~D5 (2026-09-04, 전원 권장안대로)
 - [x] Phase 0 — 1주차: 기반 구성  (2026-09-04 완료 · 검증 통과 · 커밋 완료)
-- [ ] Phase 1 — 2주차: 랜딩 + 진단 폼  ← **다음 착수 대상**
+- [ ] Phase 1 — 2주차: 랜딩 + 진단 폼
+  - [x] 1.1 랜딩페이지 (2026-09-04 · frontend-design · 라이트 전용 · 반응형)
+  - [ ] 1.2~1.7 진단 폼 + `POST /api/diagnoses`  ← **다음 착수 대상**
 - [ ] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)
 - [ ] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4
 - [ ] Phase 4 — 지속(P1): 출시 마무리
@@ -98,7 +100,13 @@
 
 ## Phase 1 — 2주차: 랜딩 + 진단 폼
 
-- [ ] 1.1 랜딩페이지: Hero → 문제 제시 → Before/After → 서비스 5종 카드 → 자동화 데모 3개(`자동화 데모` 라벨 필수) → 진단 CTA → 구축 절차 → 신뢰 요소 → FAQ → 최종 CTA (기획서 §5). 반응형.
+- [x] 1.1 랜딩페이지: Hero → 문제 제시 → Before/After → 서비스 5종 → 자동화 데모 3개(`자동화 데모` 배지 필수) → 진단 CTA → 구축 절차 → 신뢰 요소 → FAQ → 최종 CTA (기획서 §5). 반응형. (2026-09-04)
+  - `app/(marketing)/{layout,page}.tsx` + `components/marketing/*` (전부 RSC, 클라이언트 JS 0). `app/globals.css`에 `--wak-*` 토큰 + 히어로 신호 애니메이션.
+  - 폰트: Pretendard(CDN dynamic-subset) 본문 + IBM Plex Mono(next/font) — 영문 모듈명·인덱스 한정. 라이트 전용.
+  - 결정: 헤더만 공용(`layout.tsx`), 푸터 최소. 네비 대상 라우트 일부는 아직 스텁(다음 라운드). 블로그는 네비 제외.
+  - **문구 미확정(구조만, `{/* TODO */}`)**: 구축 절차 단계 설명 / 신뢰 요소 본문 / FAQ 6문항 / 푸터 사업자 정보.
+  - 범위 밖(다음 라운드): 폼·API·`/diagnosis/[id]` 결과 페이지·GA4·다크 모드·데모 상세 페이지.
+  - 검증: `build`(정적 프리렌더 `○ /`) · `lint` 0 · 데스크톱/모바일 스크린샷 육안.
 - [ ] 1.2 5단계 진단 폼(기획서 §7): 단계별 화면, 진행률, 이전/다음, 오류 메시지, 제출 버튼 중복 클릭 방지
   - 1 회사정보 / 2 사용도구(복수) / 3 반복업무(복수) / 4 업무량·문제 / 5 상담정보 + 개인정보 동의
   - 선택지는 전부 `lib/options.ts` 참조
@@ -111,7 +119,7 @@
   - **웹훅 호출 실패 시 `FAILED` + Telegram 알림** (결함 #3, 치명)
   - n8n 미구성 단계에서는 env 없으면 skip + 로그
   - `{ diagnosisId }` 반환
-- [ ] 1.6 **서버 측 중복 제출 방지** — 멱등성 키 또는 단시간 동일 페이로드 차단 (결함 #13)
+- [ ] 1.6 **서버 측 중복 제출 방지** — 클라이언트 생성 `idempotencyKey`(폼 마운트 시 UUID 1개) + `diagnoses` UNIQUE 제약. 재제출 시 기존 row의 `diagnosisId` 그대로 반환(추가 lead/AI 호출 없음). 마이그레이션 `0002` 필요 (결함 #13, 2026-09-04 확정)
 - [ ] 1.7 제출 성공 시 `/diagnosis/[id]` 이동
 
 ---
@@ -228,6 +236,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-03: 전체 md 검토 반영. 스펙 결함 22건을 `CLAUDE.md`에 기록하고 각 페이즈에 해소 작업 배치. 선행 결정 5건을 `docs/decisions.md`로 분리. Phase 0에 `options.ts`/`clientIp.ts`/Dockerfile/포트 바인딩, Phase 1에 경쟁 조건·웹훅 실패·중복 제출 대응, Phase 3에 이용약관·태깅 위치 수정 추가.
 - 2026-09-04: **D1~D5 전원 권장안대로 확정.** 진단 폼에 도입 목적·담당 인원 추가하고 현재 처리 방식 제거, 선택지 한글 라벨 저장, 서비스 태깅을 상담 시점 Next.js로, `difficulty` 컬럼 삭제, 백업은 Free + cron `pg_dump`. Phase 0 착수 가능 상태.
 - 2026-09-04: **Phase 0 완료.** `create-next-app@latest`가 **Next.js 16.3.4 / React 19.2.8 / Tailwind v4 / zod 4.5**를 설치함(스펙·초기 계획의 "Next 15" 가정과 다름 — 스텁 수준에서는 영향 없음, `params`는 Promise·`PageProps`/`RouteContext`는 전역 생성 타입). shadcn 스타일 `base-nova`. 검증 결과: `next build` 성공(16 라우트), `eslint` 0건, `tsc --noEmit` 청정, `docker compose config` 유효(포트 `127.0.0.1` 바인딩 확인), `0001_init.sql`을 Postgres 16에 적용해 5테이블+RLS+정책6+트리거2 생성 및 CHECK/unique/트리거 동작 확인, `rateLimit`(6번째 차단·버킷 분리)·`clientIp`(cf 우선·xff 파싱·fallback) 유닛 통과. `git init` + 초기 커밋.
+- 2026-09-04: **Phase 1을 라운드로 분할.** 라운드 1 = 랜딩 페이지만(1.1), 폼·API(1.2~1.7)는 라운드 2. 1.1을 `frontend-design`으로 구현 — 워크플로 스파인 + 히어로 파이프라인 컨셉, Pretendard+Plex Mono, 라이트 전용, RSC 전용. 결함 #13 방식을 `idempotencyKey` + `diagnoses` UNIQUE로 확정(마이그레이션 `0002`, 라운드 2). 랜딩의 TODO 문구(구축 절차·신뢰 요소·FAQ·사업자 정보)는 확정 대기.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
