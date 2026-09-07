@@ -4,6 +4,8 @@
 -- POST /api/diagnoses 는 폼이 마운트 시 만든 UUID(idempotencyKey)를 함께 받는다.
 -- 더블클릭 / 네트워크 재시도로 같은 제출이 두 번 와도 leads·diagnoses 행과
 -- n8n 호출이 한 번만 일어나게 한다. 재제출 시 라우트는 기존 diagnoses.id 를 반환한다.
+--
+-- 적용 확인: select column_name from information_schema.columns where table_name='diagnoses' and column_name='idempotency_key';
 
 alter table diagnoses add column idempotency_key uuid;
 

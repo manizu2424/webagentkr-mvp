@@ -31,7 +31,7 @@
 
 - [x] **결정 확정** — `docs/decisions.md` D1~D5 (2026-09-04, 전원 권장안대로)
 - [x] Phase 0 — 1주차: 기반 구성  (2026-09-04 완료 · 검증 통과 · 커밋 완료)
-- [x] Phase 1 — 2주차: 랜딩 + 진단 폼  (2026-09-07 완료 · 검증 통과)
+- [x] Phase 1 — 2주차: 랜딩 + 진단 폼  (2026-09-07 완료 · 검증 통과 · 커밋 완료)
   - [x] 1.1 랜딩페이지 (2026-09-04 · frontend-design · 라이트 전용 · 반응형)
   - [x] 1.2~1.7 진단 폼 + POST /api/diagnoses (2026-09-04)
     - 마이그레이션 0002 (idempotency_key + 부분 유니크). 로컬 Postgres 적용 확인.
@@ -97,7 +97,9 @@
 - [x] **0.8 검증** (아래 "검증" 섹션 실행)
 
 ### Phase 0 이후 사용자 직접 작업 (코드 불가)
-1. Supabase 프로젝트 생성(**리전: Seoul 권장** — 결함 #15) → `0001_init.sql` 실행
+1. Supabase 프로젝트 생성(**리전: Seoul 권장** — 결함 #15) → 마이그레이션 SQL 을 대시보드 > SQL Editor 에 붙여넣어 순서대로 1회씩 실행. 실행 후 각 파일에 `[x]` 표시:
+   - [ ] `supabase/migrations/0001_init.sql`
+   - [ ] `supabase/migrations/0002_diagnoses_idempotency.sql` (0001 이후). 이 컬럼(`diagnoses.idempotency_key`)이 없으면 배포 후 **모든** 진단 제출이 500 으로 실패하고 PII 만 담긴 고아 `leads` 행이 쌓인다. 파일 헤더의 "적용 확인" 쿼리로 컬럼 존재를 검증할 것. (Phase 2 배포 체크리스트에도 재확인)
 2. Supabase Auth **Email 가입 + 익명 로그인 모두 비활성화**, 관리자 계정 1개 수동 생성(+2FA 권장)
 3. Telegram 봇 생성(BotFather) → 토큰/chat id
 4. OpenAI API 키 발급
@@ -255,3 +257,5 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 
 ### Phase 1 이탈·메모
 - **후속 필요**: `lib/validation.ts`(Task 2)의 zod 스키마 필드 일부는 커스텀 한글 `error:` 메시지가 없어, 값이 zod 기본 규칙(타입 불일치 등)에 걸리면 영문 기본 메시지("Invalid input: expected string, received undefined")가 그대로 노출된다. 전화번호 정규식·`idempotencyKey` 등 일부 필드는 한글 메시지가 이미 있음. Task 8(스타일 전용 범위) 검토 중 발견됐으나 이번 9태스크 계획 어디에도 스코프가 없어 미착수 — "한글 전용" 원칙에 어긋나므로 `lib/validation.ts`에 한글 `error:`/`message:` 보강 필요.
+- **알려진 한계 (결함 #11 / I3)**: `POST /api/diagnoses` 의 `leads` upsert 는 `onConflict: "email"` 이라 "마지막 연락처가 이긴다". 공용 메일함(`info@`·`ceo@`)으로 다른 사람이 재제출하면 `contact_name`·`phone`·`company_name` 이 덮어써져, 먼저 접수된 `diagnoses` 행이 다른 사람 연락처와 묶인다(관리자 화면 Phase 3 에서 그대로 노출). 스펙 §5.1 6단계·결함 #11 이 재방문자 500 방지를 위해 이 방식을 명시하므로 MVP 는 유지 — post-MVP 에서 `leads` append-only + 리포트 계층 email 디둡으로 재검토. 최종 리뷰에서 docs-only 로 확정(쿼리 변경 없음).
+- **되돌림 (최종 리뷰 m8)**: SDD 원장 Ruling 1 로 추가했던 `tsx` devDependency 를 소비처가 없어 제거(`npm uninstall tsx`). 일회성 테스트는 계획대로 `node --experimental-strip-types` 를 쓰고 `_wak_*.mts` 는 사용 후 삭제됐으므로 `tsx` 는 죽은 의존성이었음.

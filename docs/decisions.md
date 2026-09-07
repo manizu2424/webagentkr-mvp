@@ -149,6 +149,15 @@ DDL에 `difficulty text` 컬럼이 있으나 **AI 출력(§7.3)에 대응하는 
 
 ---
 
+## 추가 기록 (2026-09-07) — `leads` upsert "마지막 연락처가 이긴다" (결함 #11 / 최종 리뷰 I3)
+
+`POST /api/diagnoses` 의 `leads` upsert 는 `onConflict: "email"` 을 쓴다(스펙 §5.1 6단계·결함 #11 이 재방문자 500 방지를 위해 명시). 시맨틱은 **"마지막 연락처가 이긴다"** — 같은 이메일(공용 메일함 `info@`·`ceo@` 등)로 다른 담당자가 재제출하면 `contact_name`·`phone`·`company_name`·`consulting_method` 가 덮어써지고, 먼저 접수된 `diagnoses` 행이 다른 사람의 연락처와 묶일 수 있다(`leads` 에 이력·`updated_at` 없음).
+
+> **결정 (2026-09-07, 최종 리뷰):** 쿼리 동작은 **변경하지 않는다**(docs-only). 스펙·결함 #11 요구사항인 재방문자 500 방지를 유지. 코드(`app/api/diagnoses/route.ts` leads upsert 위 주석)·`task.md` Phase 1 이탈·메모에 한계로 명시.
+> **post-MVP 방향:** `leads` 를 제출 단위 append-only 로 전환하고 email 디둡은 관리자/리포트 계층에서 수행.
+
+---
+
 ## 참고 — 결정이 필요 없는 결함
 
 나머지 15건은 기술적으로 답이 정해져 있어 구현 중 처리한다. `task.md`의 "스펙 결함 추적" 표 참조.

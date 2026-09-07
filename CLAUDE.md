@@ -167,7 +167,7 @@ AI 결과로부터 `consultations.suggested_service_type`(5종 중 하나)를 �
 | 10 | 둘 다 | select 옵션 값 목록이 없음 — **resolved D2** (규약 참조) |
 | 11 | 기술 스펙 §4.3 | `leads` "upsert"에 upsert 기준 unique 키가 없음. `leadId`는 클라이언트에 반환된 적이 없음 |
 | 12 | 기술 스펙 §4.2 | `SUBMITTED` 응답 형태가 정의되지 않음 |
-| 13 | 기획서 §7 | 중복 제출 방지가 클라이언트 전용. 서버 멱등성 없음 — **resolved** (0002 부분 유니크 인덱스 + 클라이언트 idempotencyKey, POST /api/diagnoses) |
+| 13 | 기획서 §7 | 중복 제출 방지가 클라이언트 전용. 서버 멱등성 없음 — **resolved** (D 번호 없음은 의도적 — D1~D5 같은 결정 기록이 아니라 구현으로 해소됨: 0002 부분 유니크 인덱스 + 클라이언트 idempotencyKey, POST /api/diagnoses) |
 | 14 | 기획서 §4 vs §17 | "Docker 배포 + DB 백업"이 P0이지만 4주차 이후로 배치됨. 이용약관(§16.2)은 어느 범위 목록·일정에도 없음 |
 | 15 | 기획서 §16.1 | 국외 이전 분석이 AI 호출만 다루고 Telegram / Contabo / Supabase 리전은 빠짐 |
 | 16 | 기술 스펙 §2 vs §8 | 주장된 n8n/Next.js env 분리가 compose 보간에서는 실제로 일어나지 않음 |
