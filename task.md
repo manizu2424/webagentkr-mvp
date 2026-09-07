@@ -31,13 +31,17 @@
 
 - [x] **결정 확정** — `docs/decisions.md` D1~D5 (2026-09-04, 전원 권장안대로)
 - [x] Phase 0 — 1주차: 기반 구성  (2026-09-04 완료 · 검증 통과 · 커밋 완료)
-- [ ] Phase 1 — 2주차: 랜딩 + 진단 폼
+- [x] Phase 1 — 2주차: 랜딩 + 진단 폼  (2026-09-07 완료 · 검증 통과)
   - [x] 1.1 랜딩페이지 (2026-09-04 · frontend-design · 라이트 전용 · 반응형)
-  - [ ] 1.2~1.7 진단 폼 + `POST /api/diagnoses`  ← **진행 중** (브랜치 `feat/diagnosis-form`)
-    - 스펙: `docs/superpowers/specs/2026-09-04-diagnosis-form-submit-api-design.md`
-    - 계획: `docs/superpowers/plans/2026-09-04-diagnosis-form-submit-api.md` (9 태스크, SDD 실행)
-    - 진행: Task 1(마이그레이션 0002) 완료·리뷰 통과(`c666a73`). Task 2(validation 스키마 + `tsx` devDep) 구현 완료(`6cc6489`), 리뷰 대기. Task 3~9 대기.
-    - SDD 원장: `.superpowers/sdd/2026-09-04-diagnosis-form-submit-api/progress.md`
+  - [x] 1.2~1.7 진단 폼 + POST /api/diagnoses (2026-09-04)
+    - 마이그레이션 0002 (idempotency_key + 부분 유니크). 로컬 Postgres 적용 확인.
+    - lib: validation(단계 스키마), pick, diagnosisWebhook(PII 경계), telegram, analytics(track 스텁)
+    - POST /api/diagnoses: 허니팟/rate limit/zod → 멱등성 조회 → leads upsert → diagnoses insert
+      → PROCESSING 선전이(결함 #1) → webhook(PII 제외) → 실패 시 FAILED+Telegram(결함 #3)
+    - 폼: 단일 client wizard(useReducer, 지속성 없음), 5단계, 단계별 zod, 허니팟, GA4 track 호출부
+    - /diagnosis/[id]: 정적 "분석 중" (폴링은 Phase 2.1~2.2)
+    - frontend-design 패스(Task 8, `4299cd3`): 5단계 진행률을 랜딩 히어로 파이프라인 컨셉(다이아몬드 노드 + 헤어라인 커넥터)으로 재설계, `--wak-danger` 토큰 도입해 오류 색상 통일(raw `red-*` 전량 교체), 접근성 버그 2건 수정(Tailwind v4 `outline-none`이 포커스 링 outline-style을 0으로 만드는 문제, `sr-only` 라디오 chip의 키보드 포커스 표시 부재 → `:has(:focus-visible)`로 해결), 탭 타겟 44px 이상 + `motion-reduce:transition-none` 가드
+    - 검증: build/lint 통과, 0002 SQL, non-DB curl 3종, 폼 Playwright 흐름. DB 통합 검증은 Supabase 연결 시.
 - [ ] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)
 - [ ] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4
 - [ ] Phase 4 — 지속(P1): 출시 마무리
@@ -111,20 +115,20 @@
   - **문구 미확정(구조만, `{/* TODO */}`)**: 구축 절차 단계 설명 / 신뢰 요소 본문 / FAQ 6문항 / 푸터 사업자 정보.
   - 범위 밖(다음 라운드): 폼·API·`/diagnosis/[id]` 결과 페이지·GA4·다크 모드·데모 상세 페이지.
   - 검증: `build`(정적 프리렌더 `○ /`) · `lint` 0 · 데스크톱/모바일 스크린샷 육안.
-- [ ] 1.2 5단계 진단 폼(기획서 §7): 단계별 화면, 진행률, 이전/다음, 오류 메시지, 제출 버튼 중복 클릭 방지
+- [x] 1.2 5단계 진단 폼(기획서 §7): 단계별 화면, 진행률, 이전/다음, 오류 메시지, 제출 버튼 중복 클릭 방지
   - 1 회사정보 / 2 사용도구(복수) / 3 반복업무(복수) / 4 업무량·문제 / 5 상담정보 + 개인정보 동의
   - 선택지는 전부 `lib/options.ts` 참조
-- [ ] 1.3 클라이언트 유효성 검사 = `lib/validation.ts` 스키마 재사용
-- [ ] 1.4 허니팟 `hp_field` (숨김: `position:absolute;left:-9999px` + `tabIndex=-1` + `aria-hidden`) — 기술 스펙 §5
-- [ ] 1.5 `POST /api/diagnoses` 구현(기술 스펙 §4.1 + 결함 수정)
+- [x] 1.3 클라이언트 유효성 검사 = `lib/validation.ts` 스키마 재사용
+- [x] 1.4 허니팟 `hp_field` (숨김: `position:absolute;left:-9999px` + `tabIndex=-1` + `aria-hidden`) — 기술 스펙 §5
+- [x] 1.5 `POST /api/diagnoses` 구현(기술 스펙 §4.1 + 결함 수정)
   - 허니팟→200 무저장 / `consentAgreed!==true`→400 / rate limit(`clientIp.ts` 사용)→429
   - leads insert → diagnoses insert(SUBMITTED)
   - **`PROCESSING`으로 먼저 전이한 뒤** n8n webhook POST (**PII 제외**, `X-Webhook-Secret`) — 순서 역전으로 경쟁 조건 제거 (결함 #1, 치명)
   - **웹훅 호출 실패 시 `FAILED` + Telegram 알림** (결함 #3, 치명)
   - n8n 미구성 단계에서는 env 없으면 skip + 로그
   - `{ diagnosisId }` 반환
-- [ ] 1.6 **서버 측 중복 제출 방지** — 클라이언트 생성 `idempotencyKey`(폼 마운트 시 UUID 1개) + `diagnoses` UNIQUE 제약. 재제출 시 기존 row의 `diagnosisId` 그대로 반환(추가 lead/AI 호출 없음). 마이그레이션 `0002` 필요 (결함 #13, 2026-09-04 확정)
-- [ ] 1.7 제출 성공 시 `/diagnosis/[id]` 이동
+- [x] 1.6 **서버 측 중복 제출 방지** — 클라이언트 생성 `idempotencyKey`(폼 마운트 시 UUID 1개) + `diagnoses` UNIQUE 제약. 재제출 시 기존 row의 `diagnosisId` 그대로 반환(추가 lead/AI 호출 없음). 마이그레이션 `0002` 필요 (결함 #13, 2026-09-04 확정)
+- [x] 1.7 제출 성공 시 `/diagnosis/[id]` 이동
 
 ---
 
@@ -203,18 +207,18 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 
 | 결함 | 해소 단계 |
 |---|---|
-| #1 경쟁 조건 | 1.5 |
+| #1 경쟁 조건 | 1.5 (라운드 2 반영) |
 | #2 프록시 IP | 0.5 (`clientIp.ts`), 1.5, 4.6 |
-| #3 웹훅 실패 | 1.5 |
+| #3 웹훅 실패 | 1.5 (라운드 2 반영) |
 | #4 포트 노출 | 0.6 |
 | #5 익명 로그인 | 0.3 주석 + 사용자 작업 2 |
 | #6·#7 누락 필드 | D1 → 0.0/0.3 |
 | #8 태깅 위치 | D3 → 3.3 |
 | #9 필드 매핑 | 0.3(difficulty), 2.5 |
 | #10 선택지 값 | D2 → 0.5 (`options.ts`) |
-| #11 upsert 키 | 0.3, 3.1 |
+| #11 upsert 키 | 0.3, 3.1 (라운드 2 반영) |
 | #12 SUBMITTED | 2.1 |
-| #13 중복 제출 | 1.6 |
+| #13 중복 제출 | 1.6 (라운드 2 반영) |
 | #14 P0/일정 불일치 | 3.6, 4.5 |
 | #15 국외 이전 | 3.5 + 사용자 작업 1 |
 | #16 env 분리 | 0.4, 0.6 |
@@ -248,3 +252,6 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - `#11`: `leads.email`에 `unique` + 형식 CHECK 추가. `POST /api/diagnoses`는 Phase 1에서 email 기준 **upsert**로 구현(재방문자 500 방지). 신규-상담-무진단 경로도 email upsert.
 - `#21`: `consultations.preferred_date`는 D2-b가 날짜 아닌 선택지 버킷("가능한 빨리" 등)이 되어 `text`가 **정답** — 변경 없음. `diagnoses.website_status`는 다른 옵션 컬럼과 마찬가지로 CHECK 없이 zod/`options.ts`로만 강제(스펙 방침 유지, 라벨=계약 이중화 회피).
 - `next.config.ts`에 `output: "standalone"`, `.gitignore`에 `n8n.env`/`!*.example` 규칙 추가.
+
+### Phase 1 이탈·메모
+- **후속 필요**: `lib/validation.ts`(Task 2)의 zod 스키마 필드 일부는 커스텀 한글 `error:` 메시지가 없어, 값이 zod 기본 규칙(타입 불일치 등)에 걸리면 영문 기본 메시지("Invalid input: expected string, received undefined")가 그대로 노출된다. 전화번호 정규식·`idempotencyKey` 등 일부 필드는 한글 메시지가 이미 있음. Task 8(스타일 전용 범위) 검토 중 발견됐으나 이번 9태스크 계획 어디에도 스코프가 없어 미착수 — "한글 전용" 원칙에 어긋나므로 `lib/validation.ts`에 한글 `error:`/`message:` 보강 필요.
