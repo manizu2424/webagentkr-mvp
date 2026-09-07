@@ -9,7 +9,7 @@
 | AI 출력 (기술 스펙 §7.3) | `diagnosis_results` 컬럼 | `GET /api/diagnoses/[id]` 의 `result` 필드 | 비고 |
 |---|---|---|---|
 | `automationScore` (int 0–100) | `automation_score` smallint | `automationScore` | |
-| `priorityTasks` (3–5개 배열) | `recommended_tasks` jsonb | `priorityTasks` | 항목별 `difficulty` = `낮음 | 중간 | 높음` (D4: 최상위 난이도 컬럼 없음) |
+| `priorityTasks` (3–5개 배열) | `recommended_tasks` jsonb | `priorityTasks` | 항목별 `difficulty` = `낮음/중간/높음` (D4: 최상위 난이도 컬럼 없음) |
 | `totalEstimatedSavedHours` `{min,max}` | `estimated_saved_hours` jsonb | `totalEstimatedSavedHours` | |
 | `recommendedStack` (string[]) | `recommended_stack` text[] | `recommendedStack` | 빈 배열이면 결과 카드에서 생략 |
 | `implementationSteps` (string[]) | `implementation_steps` text[] | `implementationSteps` | 빈 배열이면 결과 카드에서 생략 |
@@ -17,6 +17,17 @@
 
 - `priorityTasks[].difficulty` 외에 **최상위 `difficulty`는 없다** (`docs/decisions.md` D4).
 - DB→API 매핑 구현: `lib/diagnosisResult.ts` `toApiResult()`. Mock 픽스처: `lib/mockDiagnosisResult.ts`.
+
+## Phase B 주의 (n8n 워크플로우 빌드 시)
+
+- **서비스 유형 자동 태깅은 이 워크플로우에서 하지 않는다** — 상담 신청 시점에 Next.js `lib/serviceTagging.ts`가 `diagnosis_results`를 읽어 계산한다 (`docs/decisions.md` D3). 기술 스펙 §6 / 기획서 §11.3만 보고 태깅 노드를 추가하지 말 것 (스펙 결함 #8).
+- **Webhook Trigger 페이로드** (Next.js → n8n, PII 없음 — `POST /api/diagnoses`가 이미 제거). 허용 키의 단일 소스는 `lib/validation.ts`의 `N8N_PAYLOAD_KEYS` (11키) + `diagnosisId`:
+  ```
+  diagnosisId, industry, employeeCount, websiteStatus, currentTools[], repetitiveTasks[],
+  dailyHours, staffCount, monthlyVolume, purpose, painPoint, budgetRange
+  ```
+  (`staffCount` · `purpose`는 D1 추가 필드 — PII가 아니라 업무 데이터라 포함.)
+- **응답 검증 노드**: 필수 필드 검증 실패 시 **1회 재시도 후** `status=FAILED` + `[진단 실패]` Telegram (기획서 §9.3, CLAUDE.md "AI 출력 안정성").
 
 ## Phase B 워크플로우 (예정, 기술 스펙 §6)
 
@@ -34,4 +45,9 @@
 ```
 
 - 별도 Error Trigger 워크플로우 → `TELEGRAM_ERROR_CHAT_ID` (기획서 §16.5).
-- 완성 후 `n8n/workflows/{diagnosis-pipeline,error-trigger}.json` 으로 export·커밋.
+
+## 워크플로우 export + 재해복구
+
+n8n 서버가 죽어도 복구할 수 있도록, 완성한 워크플로우를 JSON으로 export해 이 디렉터리에 커밋한다 (기술 스펙 §6, §15.2).
+
+**export 방법**: n8n UI에서 워크플로우 열기 → 우상단 `⋯` → **Download** → 받은 JSON을 `diagnosis-pipeline.json` / `error-trigger.json` 파일명으로 저장 후 커밋.
