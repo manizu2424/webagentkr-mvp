@@ -152,11 +152,17 @@ export async function POST(req: Request) {
       if (!res.ok) throw new Error(`webhook ${res.status}`);
     } catch (err) {
       // 10. webhook 실패 — FAILED + 실패 알림 (결함 #3). 그래도 200 반환.
+      // status="PROCESSING" 가드: n8n 이 fetch 타임아웃 이후에도 워크플로우를 마치고
+      // COMPLETED 를 먼저 기록했을 수 있으므로, 그 경우 이 update 는 no-op 이어야 한다.
       console.error("[diagnoses] webhook 호출 실패:", err);
-      await supabase
+      const toFailed = await supabase
         .from("diagnoses")
         .update({ status: "FAILED" })
-        .eq("id", diagnosisId);
+        .eq("id", diagnosisId)
+        .eq("status", "PROCESSING");
+      if (toFailed.error) {
+        console.error("[diagnoses] FAILED 전이 실패:", toFailed.error);
+      }
       await sendTelegram(
         `[진단 실패] ${diagnosisId} — webhook 호출 실패`,
         process.env.TELEGRAM_ERROR_CHAT_ID,
