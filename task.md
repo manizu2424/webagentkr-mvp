@@ -136,15 +136,21 @@
 
 ## Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)
 
-- [ ] 2.1 `GET /api/diagnoses/[id]` (기술 스펙 §4.2): PROCESSING / COMPLETED(+result) / FAILED. **`SUBMITTED`는 PROCESSING으로 취급**(결함 #12). lead 정보 절대 미포함.
-- [ ] 2.2 결과 페이지 `app/diagnosis/[id]/page.tsx` — 3초 폴링, COMPLETED/FAILED 시 중단, **최대 시도 횟수/타임아웃 설정**. 구조화 카드(준비도, 우선 업무, 예상 절감 시간, 권장 구성, 다음 행동). "추정치" 명시.
-- [ ] 2.3 FAILED UX(기획서 §9.5): 안내 문구 + 입력한 연락처로 상담 폼 프리필
-- [ ] 2.4 **Mock 경로 먼저**: 고정 더미 JSON으로 DB 저장 → 결과 페이지 → Telegram 알림까지 동작시킴(기획서 §9.4)
-- [ ] 2.5 **AI↔DB↔API 필드 매핑표를 `n8n/workflows/README.md`에 명문화** (결함 #9) — `CLAUDE.md`의 매핑표 참조
+- [x] 2.1 `GET /api/diagnoses/[id]` — status 폴링, SUBMITTED→PROCESSING(결함 #12), lead 미포함, Cache-Control: no-store
+- [x] 2.2 결과 페이지 — 서버 shell + 클라이언트 폴링 아일랜드(3s×60=3분), 6카드(추정치 명시), stack/steps 빈 배열 생략
+- [x] 2.3 FAILED/timeout UX — 사과 문구 + /consultation?diagnosisId=<id> CTA (프리필·lead 재사용은 Phase 3)
+- [x] 2.4 Mock 경로 — POST /api/dev/mock-result/[id] (n8n 대역, 프로덕션 404), lib/mockDiagnosisResult.ts 픽스처
+- [x] 2.5 AI↔DB↔API 매핑표 — n8n/workflows/README.md
 - [ ] 2.6 n8n 워크플로우 구성(기술 스펙 §6): Webhook(secret 검증) → 입력 정리 → OpenAI HTTP Request(Structured Output, 기술 스펙 §7.3 스키마 — strict 요건 충족 확인됨) → 응답 필드 검증 → IF → 성공: `diagnosis_results` insert + status=COMPLETED + Telegram / 실패: status=FAILED + Telegram `[진단 실패]`
 - [ ] 2.7 Error Trigger 워크플로우 → `TELEGRAM_ERROR_CHAT_ID` (기획서 §16.5)
 - [ ] 2.8 워크플로우 JSON export → `n8n/workflows/{diagnosis-pipeline,error-trigger}.json` 커밋
 - [ ] 2.9 필드 단계적 안정화: 우선 핵심 4개(준비도/우선업무/절감시간/요약), 나머지는 P1 가능(기획서 §9.3)
+
+### Phase 2 이탈·메모
+- `POST /api/diagnoses`는 webhook 미설정 시 지금도 그냥 skip(변경 없음). Mock 결과 주입은 별도 dev 라우트가 담당 — 실제 코드 경로에 mock 분기를 넣지 않음(스펙 D-B).
+- `visibilitychange` 백그라운드 폴링 일시정지: 채택 안 함(3분 상한이 안전망, YAGNI).
+- `?_test_pollMs` / `?_test_maxAttempts`: 비프로덕션에서만 동작하는 폴링 축소 쿼리(Playwright 편의).
+- DB 통합 검증(제출→PROCESSING→mock-result→COMPLETED)은 Supabase 연결 시 수행 — 이 환경에선 에러 경로 + 프리뷰로 대체(각 태스크 리포트에 기록).
 
 ---
 
