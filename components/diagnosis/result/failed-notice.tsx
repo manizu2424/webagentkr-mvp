@@ -12,6 +12,13 @@ const COPY = {
   },
 } as const;
 
+// 실패는 폼(diagnosis-wizard)의 오류 블록과 같은 좌측 규칙 + 옅은 틴트.
+// 타임아웃은 오류가 아니라 "진행 중"이므로 danger 대신 signal 로 톤을 낮춘다.
+const NOTICE = {
+  failed: "border-danger bg-danger/[0.05] text-danger",
+  timeout: "border-signal bg-signal/[0.05] text-ink-soft",
+} as const;
+
 export function FailedNotice({
   variant,
   diagnosisId,
@@ -22,12 +29,20 @@ export function FailedNotice({
   const c = COPY[variant];
   return (
     <div className="mt-8">
-      <h1 className="text-2xl font-extrabold tracking-tight text-ink">{c.title}</h1>
-      <p className="mt-4 text-[0.95rem] leading-relaxed text-ink-soft">{c.body}</p>
+      <div className="border-t-2 border-ink pt-3">
+        <h1 className="text-[1.5rem] leading-tight font-extrabold tracking-tight text-ink sm:text-[1.75rem]">
+          {c.title}
+        </h1>
+      </div>
+      <p
+        className={`mt-6 max-w-[34rem] border-l-2 px-4 py-3.5 text-[0.92rem] leading-[1.75] ${NOTICE[variant]}`}
+      >
+        {c.body}
+      </p>
       <Link
         href={`/consultation?diagnosisId=${diagnosisId}`}
         onClick={() => track("consultation_cta_click", { from: variant })}
-        className="mt-6 inline-flex min-h-11 items-center rounded-md bg-signal px-5 text-[0.95rem] font-medium text-white transition-colors hover:bg-[#182fc0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
+        className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-signal px-5 py-3 text-[0.95rem] leading-none font-medium text-white transition-colors hover:bg-[#182fc0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
       >
         상담 신청하기
       </Link>
