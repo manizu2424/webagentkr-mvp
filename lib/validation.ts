@@ -50,10 +50,65 @@ export const diagnosisSubmissionSchema = z.object({
   consentAgreed: z.literal(true, {
     error: () => "개인정보 수집·이용 동의가 필요합니다",
   }),
+  // 멱등성 — 폼이 마운트 시 crypto.randomUUID() 로 생성. 내부 전용(N8N_PAYLOAD_KEYS 에 없음)
+  idempotencyKey: z.uuid({ error: "잘못된 요청입니다" }),
   hp_field: honeypot,
 });
 
 export type DiagnosisSubmission = z.infer<typeof diagnosisSubmissionSchema>;
+
+/** 단계별 필드 — 클라이언트 단계 검증 + 서버 400 시 점프 단계 계산에 쓴다 */
+export const DIAGNOSIS_STEP_FIELDS = {
+  1: ["companyName", "industry", "employeeCount", "websiteStatus"],
+  2: ["currentTools"],
+  3: ["repetitiveTasks"],
+  4: ["dailyHours", "staffCount", "monthlyVolume", "painPoint"],
+  5: [
+    "purpose",
+    "budgetRange",
+    "consultingMethod",
+    "contactName",
+    "email",
+    "phone",
+    "consentAgreed",
+  ],
+} as const satisfies Record<1 | 2 | 3 | 4 | 5, readonly (keyof DiagnosisSubmission)[]>;
+
+/** 단계별 부분 스키마 — "다음" 클릭 시 해당 단계만 검증 */
+export const diagnosisStep1Schema = diagnosisSubmissionSchema.pick({
+  companyName: true,
+  industry: true,
+  employeeCount: true,
+  websiteStatus: true,
+});
+export const diagnosisStep2Schema = diagnosisSubmissionSchema.pick({
+  currentTools: true,
+});
+export const diagnosisStep3Schema = diagnosisSubmissionSchema.pick({
+  repetitiveTasks: true,
+});
+export const diagnosisStep4Schema = diagnosisSubmissionSchema.pick({
+  dailyHours: true,
+  staffCount: true,
+  monthlyVolume: true,
+  painPoint: true,
+});
+export const diagnosisStep5Schema = diagnosisSubmissionSchema.pick({
+  purpose: true,
+  budgetRange: true,
+  consultingMethod: true,
+  contactName: true,
+  email: true,
+  phone: true,
+  consentAgreed: true,
+});
+export const diagnosisStepSchemas = {
+  1: diagnosisStep1Schema,
+  2: diagnosisStep2Schema,
+  3: diagnosisStep3Schema,
+  4: diagnosisStep4Schema,
+  5: diagnosisStep5Schema,
+} as const;
 
 /** n8n webhook 으로 보낼 필드 (PII 제외 — 기술 스펙 §4.1, §16.1) */
 export const N8N_PAYLOAD_KEYS = [

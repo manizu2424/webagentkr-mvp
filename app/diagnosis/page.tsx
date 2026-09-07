@@ -1,9 +1,35 @@
-// [스텁] 무료 자동화 진단 — Phase 1.2 / 기획서 §7 에서 구현 예정 (task.md)
-export default function Page() {
+import Link from "next/link";
+import { IBM_Plex_Mono } from "next/font/google";
+import { DiagnosisWizard } from "@/components/diagnosis/diagnosis-wizard";
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
+  display: "swap",
+});
+
+const PRETENDARD_CSS =
+  "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendard-variable-dynamic-subset.min.css";
+
+export default function DiagnosisPage() {
   return (
-    <main className="p-8">
-      <h1 className="text-xl font-semibold">무료 자동화 진단</h1>
-      <p className="text-sm text-neutral-500">스텁 페이지 · Phase 1.2 / 기획서 §7</p>
-    </main>
+    <div
+      className={`${plexMono.variable} font-display flex min-h-full flex-1 flex-col bg-paper text-ink`}
+    >
+      <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
+      <link rel="stylesheet" href={PRETENDARD_CSS} />
+      <header className="border-b border-line">
+        <div className="mx-auto max-w-xl px-5 py-4">
+          <Link
+            href="/"
+            className="text-[1.05rem] font-extrabold tracking-tight text-ink"
+          >
+            WEBAGENT<span className="text-ink-soft">.KR</span>
+          </Link>
+        </div>
+      </header>
+      <DiagnosisWizard />
+    </div>
   );
 }

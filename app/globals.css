@@ -55,6 +55,7 @@
   --color-line: var(--wak-line);
   --color-signal: var(--wak-signal);
   --color-resolved: var(--wak-resolved);
+  --color-danger: var(--wak-danger);
   --font-display: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui,
     sans-serif;
   --font-flow: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
@@ -68,6 +69,8 @@
   --wak-line: #cdd5ce;
   --wak-signal: #1f3ce6;
   --wak-resolved: #0c8b77;
+  /* 오류 전용. 팔레트(청록·파랑) 밖의 산화철 계열 — paper 대비 6.1:1 */
+  --wak-danger: #b32218;
 }
 
 :root {

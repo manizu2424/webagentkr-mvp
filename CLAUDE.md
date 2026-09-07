@@ -4,7 +4,7 @@
 
 ## 현재 상태
 
-Phase 0(1주차 기반 구성) 완료. 다음은 Phase 1(랜딩 + 진단 폼). 라우트·`lib/`·마이그레이션·Docker 골격은 있으나 페이지/API는 전부 스텁이다.
+Phase 0(1주차 기반 구성)·Phase 1(2주차: 랜딩 + 진단 폼) 완료. 다음은 Phase 2(3주차: 결과 파이프라인, Mock 우선). 랜딩 페이지, 5단계 진단 폼, `POST /api/diagnoses`(허니팟·rate limit·멱등성·PROCESSING 선전이·webhook 실패 처리 포함)가 동작한다. `GET /api/diagnoses/[id]`, 결과 페이지 폴링, n8n 워크플로우는 아직 스텁이다.
 
 **설치된 버전** (`create-next-app@latest` 결과): Next.js **16.3.4** (Turbopack) · React 19.2.8 · Tailwind **v4**(CSS 기반 설정, `tailwind.config` 없음) · zod **4.5** · shadcn 스타일 `base-nova`. 스펙/초기 계획의 "Next 15" 가정과 다르다. Next 16 유의점: `params`/`searchParams`는 Promise, `PageProps<'/route'>`·`LayoutProps<'/'>`·`RouteContext<'/route'>`는 `next build`/`next dev`가 생성하는 전역 타입, `next lint` 제거(→ `eslint` 직접). 상세는 `node_modules/next/dist/docs/` 및 `AGENTS.md`(이 파일 끝에서 `@AGENTS.md`로 임포트).
 
@@ -167,7 +167,7 @@ AI 결과로부터 `consultations.suggested_service_type`(5종 중 하나)를 �
 | 10 | 둘 다 | select 옵션 값 목록이 없음 — **resolved D2** (규약 참조) |
 | 11 | 기술 스펙 §4.3 | `leads` "upsert"에 upsert 기준 unique 키가 없음. `leadId`는 클라이언트에 반환된 적이 없음 |
 | 12 | 기술 스펙 §4.2 | `SUBMITTED` 응답 형태가 정의되지 않음 |
-| 13 | 기획서 §7 | 중복 제출 방지가 클라이언트 전용. 서버 멱등성 없음 |
+| 13 | 기획서 §7 | 중복 제출 방지가 클라이언트 전용. 서버 멱등성 없음 — **resolved** (D 번호 없음은 의도적 — D1~D5 같은 결정 기록이 아니라 구현으로 해소됨: 0002 부분 유니크 인덱스 + 클라이언트 idempotencyKey, POST /api/diagnoses) |
 | 14 | 기획서 §4 vs §17 | "Docker 배포 + DB 백업"이 P0이지만 4주차 이후로 배치됨. 이용약관(§16.2)은 어느 범위 목록·일정에도 없음 |
 | 15 | 기획서 §16.1 | 국외 이전 분석이 AI 호출만 다루고 Telegram / Contabo / Supabase 리전은 빠짐 |
 | 16 | 기술 스펙 §2 vs §8 | 주장된 n8n/Next.js env 분리가 compose 보간에서는 실제로 일어나지 않음 |
