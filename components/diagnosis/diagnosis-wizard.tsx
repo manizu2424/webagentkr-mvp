@@ -78,11 +78,11 @@ export function DiagnosisWizard() {
   ];
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-8 px-5 py-10">
+    <div className="mx-auto flex w-full max-w-[36rem] flex-col gap-9 px-5 py-10 sm:py-14">
       <WizardProgress step={state.step} />
 
-      <div>
-        <h1 className="text-xl font-extrabold tracking-tight text-ink">
+      <div className="border-t-2 border-ink pt-3">
+        <h1 className="text-[1.5rem] leading-tight font-extrabold tracking-tight text-ink sm:text-[1.75rem]">
           {STEP_TITLES[state.step - 1]}
         </h1>
       </div>
@@ -93,7 +93,7 @@ export function DiagnosisWizard() {
           if (state.step < 5) dispatch({ type: "NEXT" });
           else void onSubmit();
         }}
-        className="flex flex-col gap-8"
+        className="flex flex-col gap-9"
       >
         <StepView values={state.values} errors={state.errors} set={set} />
         <Honeypot
@@ -102,24 +102,24 @@ export function DiagnosisWizard() {
         />
 
         {state.submitError && (
-          <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="border-l-2 border-danger bg-danger/[0.05] px-4 py-3 text-[0.9rem] leading-relaxed text-danger">
             {state.submitError}
           </p>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 border-t border-line pt-6">
           <button
             type="button"
             onClick={() => dispatch({ type: "PREV" })}
             disabled={state.step === 1 || state.submitting}
-            className="rounded-md px-4 py-2.5 text-sm text-ink-soft hover:text-ink disabled:opacity-40"
+            className="inline-flex min-h-11 items-center rounded-md px-4 text-[0.95rem] text-ink-soft transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal disabled:opacity-30 motion-reduce:transition-none"
           >
             이전
           </button>
           <button
             type="submit"
             disabled={state.submitting}
-            className="rounded-md bg-signal px-5 py-2.5 text-sm font-medium text-white hover:bg-[#182fc0] disabled:opacity-60"
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-signal px-6 text-[0.95rem] font-medium text-white transition-colors hover:bg-[#182fc0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal disabled:opacity-60 motion-reduce:transition-none"
           >
             {state.step < 5 ? "다음" : state.submitting ? "제출 중…" : "무료 진단 신청"}
           </button>

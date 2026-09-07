@@ -15,7 +15,7 @@ const PRETENDARD_CSS =
 export default function DiagnosisPage() {
   return (
     <div
-      className={`${plexMono.variable} font-display min-h-full bg-paper text-ink`}
+      className={`${plexMono.variable} font-display flex min-h-full flex-1 flex-col bg-paper text-ink`}
     >
       <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
       <link rel="stylesheet" href={PRETENDARD_CSS} />

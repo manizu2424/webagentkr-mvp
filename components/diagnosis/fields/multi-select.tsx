@@ -15,33 +15,35 @@ export function MultiSelect({
     onChange(value.includes(o) ? value.filter((v) => v !== o) : [...value, o]);
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1 text-sm font-medium text-ink">
-        {label} <span className="text-ink-soft">(복수 선택)</span>
+      <legend className="mb-2 text-[0.9rem] font-semibold text-ink">
+        {label} <span className="font-normal text-ink-soft">(복수 선택)</span>
       </legend>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         {options.map((o) => {
           const active = value.includes(o);
           return (
             <label
               key={o}
-              className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2.5 text-[0.92rem] transition-colors ${
+              className={`flex min-h-11 cursor-pointer items-center gap-2.5 border px-3.5 py-2.5 text-[0.92rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-signal motion-reduce:transition-none ${
                 active
-                  ? "border-signal bg-signal/[0.06] text-ink"
-                  : "border-line bg-panel text-ink-soft hover:border-ink-soft"
+                  ? "border-signal bg-signal/[0.07] font-medium text-ink"
+                  : "border-line text-ink-soft hover:border-ink-soft hover:bg-panel hover:text-ink"
               }`}
             >
               <input
                 type="checkbox"
                 checked={active}
                 onChange={() => toggle(o)}
-                className="size-4 accent-[var(--wak-signal)]"
+                className="size-[18px] shrink-0 accent-[var(--wak-signal)] outline-none"
               />
               {o}
             </label>
           );
         })}
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && (
+        <p className="text-[0.8rem] font-medium text-danger">{error}</p>
+      )}
     </fieldset>
   );
 }

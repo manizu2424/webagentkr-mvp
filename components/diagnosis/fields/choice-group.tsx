@@ -16,17 +16,19 @@ export function ChoiceGroup({
   const cols = { 1: "grid-cols-1", 2: "sm:grid-cols-2", 3: "sm:grid-cols-3" }[columns];
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1 text-sm font-medium text-ink">{label}</legend>
-      <div className={`grid gap-2 ${cols}`}>
+      <legend className="mb-2 text-[0.9rem] font-semibold text-ink">
+        {label}
+      </legend>
+      <div className={`grid gap-2.5 ${cols}`}>
         {options.map((o) => {
           const active = value === o;
           return (
             <label
               key={o}
-              className={`cursor-pointer rounded-md border px-3 py-2.5 text-[0.92rem] transition-colors ${
+              className={`flex min-h-11 cursor-pointer items-center border px-3.5 py-2.5 text-[0.92rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-signal motion-reduce:transition-none ${
                 active
-                  ? "border-signal bg-signal/[0.06] text-ink"
-                  : "border-line bg-panel text-ink-soft hover:border-ink-soft"
+                  ? "border-signal bg-signal/[0.07] font-medium text-ink"
+                  : "border-line text-ink-soft hover:border-ink-soft hover:bg-panel hover:text-ink"
               }`}
             >
               <input
@@ -42,7 +44,9 @@ export function ChoiceGroup({
           );
         })}
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && (
+        <p className="text-[0.8rem] font-medium text-danger">{error}</p>
+      )}
     </fieldset>
   );
 }
