@@ -25,23 +25,38 @@ const STEP_TITLES = [
   "상담 정보",
 ] as const;
 
+/**
+ * 멱등성 키. 보안 컨텍스트(HTTPS/localhost) 밖에서는 `crypto.randomUUID` 가 없어
+ * useState 초기화 중 렌더가 throw 되므로(평문 HTTP 스테이징·IP 프리뷰) 폴백을 둔다.
+ * 여기 요구되는 유일성은 사소한 수준이라 Math.random 기반 v4 로 충분하다.
+ */
+function makeIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 export function DiagnosisWizard() {
   const router = useRouter();
   const [state, dispatch] = useReducer(wizardReducer, initialWizardState);
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey] = useState(makeIdempotencyKey);
   const prevStepRef = useRef(state.step);
 
-  // step{N}_view — 각 단계 진입 시 1회 (첫 마운트 + 뒤로가기 재진입 포함)
-  useEffect(() => {
-    track(`step${state.step}_view`);
-  }, [state.step]);
-
-  // step{N}_complete — step 이 앞으로 이동한 경우에만 (NEXT 동기 검증 통과)
+  // GA4 스텝 이벤트 — 한 이펙트에서 순서를 보장한다(두 이펙트로 나누면 선언 순서상
+  // 1→2 이동 시 step2_view 가 step1_complete 보다 먼저 발화됨).
+  //   앞으로 이동: step{prev}_complete 를 먼저, 그다음 step{N}_view.
+  //   첫 마운트: prevStepRef 가 이미 state.step(=1) 이라 step1_view 만.
+  //   뒤로가기: step 이 줄어 complete 없이 step{N}_view 만.
   useEffect(() => {
     if (state.step > prevStepRef.current) {
       track(`step${prevStepRef.current}_complete`);
     }
     prevStepRef.current = state.step;
+    track(`step${state.step}_view`);
   }, [state.step]);
 
   const set = (field: Field, value: unknown) =>

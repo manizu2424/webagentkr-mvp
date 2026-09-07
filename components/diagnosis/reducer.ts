@@ -28,10 +28,8 @@ export type WizardAction =
   | { type: "SET_VALUE"; field: Field; value: unknown }
   | { type: "NEXT" }
   | { type: "PREV" }
-  | { type: "GO"; step: Step }
   | { type: "SUBMIT_START" }
-  | { type: "SUBMIT_FAIL"; errors?: FieldErrors; jumpTo?: Step | null; message: string }
-  | { type: "SUBMIT_DONE" };
+  | { type: "SUBMIT_FAIL"; errors?: FieldErrors; jumpTo?: Step | null; message: string };
 
 /** 한 단계의 값만 뽑아 해당 단계 스키마로 검증 */
 export function validateStep(
@@ -83,8 +81,6 @@ export function wizardReducer(
       const step = Math.max(1, state.step - 1) as Step;
       return { ...state, step, errors: {} };
     }
-    case "GO":
-      return { ...state, step: action.step, errors: {} };
     case "SUBMIT_START":
       return { ...state, submitting: true, submitError: null };
     case "SUBMIT_FAIL":
@@ -95,8 +91,6 @@ export function wizardReducer(
         errors: action.errors ?? state.errors,
         step: action.jumpTo ?? state.step,
       };
-    case "SUBMIT_DONE":
-      return { ...state, submitting: false };
     default:
       return state;
   }

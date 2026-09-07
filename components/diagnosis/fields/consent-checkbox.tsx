@@ -22,6 +22,7 @@ export function ConsentCheckbox({
           <Link
             href="/privacy"
             target="_blank"
+            onClick={(e) => e.stopPropagation()}
             className="underline decoration-line decoration-1 underline-offset-[4px] transition-colors hover:text-signal hover:decoration-signal motion-reduce:transition-none"
           >
             개인정보 수집·이용
