@@ -20,7 +20,7 @@ export async function submitDiagnosis(
     const res = await fetchImpl("/api/diagnoses", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...values, hp_field: "", idempotencyKey }),
+      body: JSON.stringify({ ...values, hp_field: values.hp_field ?? "", idempotencyKey }),
     });
 
     if (res.status === 200) {
