@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function ConsultationSuccessView() {
   return (
-    <div className="mt-8">
+    <div className="mx-auto w-full max-w-[36rem] px-5 py-10 sm:py-14">
       <div className="border-t-2 border-ink pt-3">
         <h1 className="text-[1.5rem] leading-tight font-extrabold tracking-tight text-ink sm:text-[1.75rem]">
           상담 신청이 접수되었습니다
