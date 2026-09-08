@@ -177,3 +177,19 @@
     animation: wak-signal 1.9s cubic-bezier(0.33, 0, 0.2, 1) 0.35s 1 both;
   }
 }
+
+/* 진단 대기 화면 — 커넥터 위를 신호가 반복해 지난다(히어로와 같은 언어, 무한 반복) */
+@keyframes wak-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wak-scan {
+    animation: wak-scan 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
