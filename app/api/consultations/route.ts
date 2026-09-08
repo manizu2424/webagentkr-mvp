@@ -55,6 +55,7 @@ export async function POST(req: Request) {
     );
   }
   const data = parsed.data;
+  const diagnosisId = data.diagnosisId ?? null;
 
   // 6. Supabase
   let supabase: ReturnType<typeof createServiceClient>;
@@ -72,12 +73,12 @@ export async function POST(req: Request) {
   let companyName: string | null = null;
   let suggested: ReturnType<typeof computeServiceType> = null;
 
-  if (data.diagnosisId) {
+  if (diagnosisId) {
     // 6a. 진단 경로 — lead 재사용 + 태깅
     const diag = await supabase
       .from("diagnoses")
       .select("lead_id, purpose, budget_range, website_status")
-      .eq("id", data.diagnosisId)
+      .eq("id", diagnosisId)
       .maybeSingle();
     if (diag.error) {
       console.error("[consultations] diagnoses 조회 실패:", diag.error.code, diag.error.message);
@@ -94,14 +95,29 @@ export async function POST(req: Request) {
       .select("company_name")
       .eq("id", leadId)
       .maybeSingle();
+    if (leadRow.error) {
+      console.warn(
+        "[consultations] leads 회사명 조회 실패:",
+        leadRow.error.code,
+        leadRow.error.message,
+      );
+    }
     companyName = (leadRow.data?.company_name as string | undefined) ?? null;
 
     // diagnosis_results 는 없을 수 있다 (FAILED/미완 진단)
     const resRow = await supabase
       .from("diagnosis_results")
       .select("recommended_stack, recommended_tasks")
-      .eq("diagnosis_id", data.diagnosisId)
+      .eq("diagnosis_id", diagnosisId)
       .maybeSingle();
+    if (resRow.error) {
+      console.error(
+        "[consultations] diagnosis_results 조회 실패:",
+        resRow.error.code,
+        resRow.error.message,
+      );
+      return NextResponse.json({ error: "internal" }, { status: 500 });
+    }
 
     const taggingDiag: TaggingDiagnosis = {
       purpose: (diag.data.purpose as string | null) ?? null,
@@ -150,7 +166,7 @@ export async function POST(req: Request) {
     .from("consultations")
     .insert({
       lead_id: leadId,
-      diagnosis_id: data.diagnosisId ?? null,
+      diagnosis_id: diagnosisId,
       suggested_service_type: suggested,
       preferred_date: data.preferredDate,
       consultation_type: data.consultationType,
@@ -168,7 +184,8 @@ export async function POST(req: Request) {
     `[신규 상담] ${companyName ?? "(회사명 미상)"}\n` +
       `방식: ${data.consultationType} / 시기: ${data.preferredDate}\n` +
       `추정 서비스 유형: ${suggested ?? "미정 (진단 없음/미완)"}` +
-      (data.diagnosisId ? `\n진단: ${data.diagnosisId}` : ""),
+      (diagnosisId ? `\n진단: ${diagnosisId}` : "") +
+      `\n상담번호: ${ins.data.id}`,
     process.env.TELEGRAM_ADMIN_CHAT_ID,
   ).catch(() => {});
 

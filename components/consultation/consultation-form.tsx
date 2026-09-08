@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { OPTIONS } from "@/lib/options";
 import { track } from "@/lib/analytics";
-import type { ConsultationSubmission } from "@/lib/validation";
+import { consultationSubmissionSchema, type ConsultationSubmission } from "@/lib/validation";
 import { TextField } from "@/components/diagnosis/fields/text-field";
 import { SelectField } from "@/components/diagnosis/fields/select-field";
 import { ConsentCheckbox } from "@/components/diagnosis/fields/consent-checkbox";
@@ -30,8 +30,25 @@ export function ConsultationForm({ diagnosisId }: { diagnosisId: string | undefi
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setFormError(null);
+
+    const parsed = consultationSubmissionSchema.safeParse({
+      ...values,
+      diagnosisId,
+      hp_field: values.hp_field ?? "",
+    });
+    if (!parsed.success) {
+      const fieldErrors: Errors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof ConsultationSubmission | undefined;
+        if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+      }
+      setErrors(fieldErrors);
+      setFormError("입력값을 다시 확인해 주세요.");
+      return;
+    }
+
+    setSubmitting(true);
     const r = await submitConsultation({ ...values, diagnosisId });
     setSubmitting(false);
     if (r.kind === "ok") {

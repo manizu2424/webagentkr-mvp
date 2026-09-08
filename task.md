@@ -193,7 +193,7 @@
       + `consultationType`(=`consultingMethod` 값) + 자유 문의(선택) + 개인정보 동의 + 허니팟.
 - [x] **A5 결과 페이지 CTA 배선** (구 3.2) — `ResultCards`·`FailedNotice` CTA → `/consultation?diagnosisId=<id>`.
       (`FailedNotice` 는 Phase 2 에서 이미 연결. `ResultCards` 에 상담 CTA + `consultation_cta_click` `track()` 추가.)
-- [x] **A6 검증** — build/lint/tsc, curl(허니팥·동의누락·rate limit·`diagnosisId` 유무 2경로), 폼 Playwright.
+- [x] **A6 검증** — build/lint/tsc, curl(허니팟·동의누락·rate limit·`diagnosisId` 유무 2경로), 폼 Playwright.
       DB 통합은 Supabase 연결 시.
 - A 에 심는 `track()` 호출부: `consultation_cta_click`(A5), `consultation_submit`(A2 성공 직후). gtag 로드·동의는 묶음 D — `track()` 스텁이 no-op 이라 지금 심어도 안전(Phase 1 step 이벤트와 동일).
 
