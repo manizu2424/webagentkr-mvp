@@ -129,7 +129,7 @@ export const N8N_PAYLOAD_KEYS = [
 // diagnosisId 가 있으면 그 진단의 lead 를 재사용, 없으면 연락처를 재입력받는다.
 export const consultationSubmissionSchema = z
   .object({
-    diagnosisId: z.uuid().optional(),
+    diagnosisId: z.uuid({ error: "잘못된 요청입니다" }).optional(),
     // 재입력 경로 (diagnosisId 없을 때 필수)
     companyName: z.string().trim().max(100).optional(),
     contactName: z.string().trim().max(50).optional(),
@@ -140,16 +140,27 @@ export const consultationSubmissionSchema = z
     // 공통
     preferredDate: opt("preferredDate"),
     consultationType: opt("consultingMethod"),
+    consentAgreed: z.literal(true, {
+      error: () => "개인정보 수집·이용 동의가 필요합니다",
+    }),
     hp_field: honeypot,
   })
   .superRefine((v, ctx) => {
     if (v.diagnosisId) return;
-    for (const k of ["companyName", "contactName", "email", "phone"] as const) {
+    const required = [
+      "companyName",
+      "contactName",
+      "email",
+      "phone",
+      "industry",
+      "employeeCount",
+    ] as const;
+    for (const k of required) {
       if (!v[k]) {
         ctx.addIssue({
           code: "custom",
           path: [k],
-          message: "진단 없이 상담을 신청하려면 연락처를 모두 입력해 주세요",
+          message: "진단 없이 상담을 신청하려면 회사·연락처 정보를 모두 입력해 주세요",
         });
       }
     }
