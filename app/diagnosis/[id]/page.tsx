@@ -34,7 +34,9 @@ export default async function DiagnosisResultPage({
       </header>
       <main className="mx-auto w-full max-w-xl px-5 py-10 sm:py-14">
         <p className="font-flow text-xs text-ink-soft">진단 번호 · {id}</p>
-        <DiagnosisResult diagnosisId={id} />
+        {/* key={id}: 두 /diagnosis/[id] 사이를 클라이언트 네비게이션해도
+            아일랜드가 remount 되어 view 가 polling 으로 초기화된다(stale-view flash 방지). */}
+        <DiagnosisResult key={id} diagnosisId={id} />
       </main>
     </div>
   );

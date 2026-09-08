@@ -11,7 +11,7 @@ export async function GET(
   ctx: RouteContext<"/api/diagnoses/[id]">,
 ) {
   const { id } = await ctx.params;
-  let supabase;
+  let supabase: ReturnType<typeof createServiceClient>;
   try {
     supabase = createServiceClient();
   } catch (e) {

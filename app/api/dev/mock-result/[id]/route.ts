@@ -19,13 +19,22 @@ export async function POST(
   }
 
   const { id } = await ctx.params;
-  const outcome =
-    new URL(req.url).searchParams.get("outcome") ?? "completed";
+  // absent 든 빈 값(?outcome=)이든 completed 로 본다.
+  const outcome = new URL(req.url).searchParams.get("outcome") || "completed";
   if (outcome !== "completed" && outcome !== "failed") {
     return NextResponse.json({ error: "bad_outcome" }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
+  let supabase: ReturnType<typeof createServiceClient>;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error(
+      "[dev/mock-result] 클라이언트 생성 실패:",
+      e instanceof Error ? e.message : String(e),
+    );
+    return NextResponse.json({ error: "internal" }, { status: 500 });
+  }
 
   const diag = await supabase
     .from("diagnoses")

@@ -22,6 +22,7 @@ export function DiagnosisResult({ diagnosisId }: { diagnosisId: string }) {
     let attempts = 0;
     let consecutiveErrors = 0;
     let stopped = false;
+    let inFlight = false;
 
     // 테스트 편의: 비프로덕션에서만 폴링 파라미터 축소 허용
     let intervalMs = POLL_INTERVAL_MS;
@@ -40,17 +41,22 @@ export function DiagnosisResult({ diagnosisId }: { diagnosisId: string }) {
     };
 
     const poll = async () => {
-      if (stopped) return;
+      // inFlight 가드: fetch 가 intervalMs 보다 느려도 폴이 겹치지 않는다
+      // (attempts 이중 증가·track 이중 발화 방지).
+      if (stopped || inFlight) return;
+      inFlight = true;
       attempts += 1;
       try {
         const res = await fetch(`/api/diagnoses/${diagnosisId}`, { cache: "no-store" });
+        if (stopped) return;
         if (res.status === 404) {
           stop();
-          setView({ kind: "error" });
+          setView({ kind: "notfound" });
           return;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as PollResponse;
+        if (stopped) return;
         consecutiveErrors = 0;
         if (json.status === "COMPLETED") {
           stop();
@@ -68,11 +74,14 @@ export function DiagnosisResult({ diagnosisId }: { diagnosisId: string }) {
           setView({ kind: "timeout" });
         }
       } catch {
+        if (stopped) return;
         consecutiveErrors += 1;
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
           stop();
           setView({ kind: "error" });
         }
+      } finally {
+        inFlight = false;
       }
     };
 

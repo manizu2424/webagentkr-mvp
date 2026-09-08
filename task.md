@@ -152,6 +152,20 @@
 - `?_test_pollMs` / `?_test_maxAttempts`: 비프로덕션에서만 동작하는 폴링 축소 쿼리(Playwright 편의).
 - DB 통합 검증(제출→PROCESSING→mock-result→COMPLETED)은 Supabase 연결 시 수행 — 이 환경에선 에러 경로 + 프리뷰로 대체(각 태스크 리포트에 기록).
 
+### Phase 2 최종 전체 브랜치 리뷰 (base `4cd0176` → head, 2026-09-08)
+- 리뷰 결과: **Critical 0.** PII 경계·`server-only` 경계·상태 머신·AI↔DB↔API 매핑 단일 소스 견고. lint·tsc 통과.
+- 반영한 수정 (커밋 1개):
+  - **폴링 폴 겹침 방지** (`diagnosis-result.tsx`): `inFlight` 가드 + `await` 뒤 `stopped` 재검사. fetch 가 3s 보다 느려도 `attempts` 이중 증가·`track("diagnosis_result_view")` 이중 발화 없음.
+  - **하드 404 문구 분리**: `GET` 404(존재하지 않는 진단 번호) → `ErrorView variant="notfound"` — "다시 시도"(계속 404) 대신 "진단 새로 시작하기" 링크. 연속 오류(transient)와 별도 뷰.
+  - `POST /api/dev/mock-result/[id]`: `createServiceClient()` try/catch 로 GET 라우트와 통일. `?outcome=`(빈 값)도 `completed` 로 처리(`?? ` → `|| `).
+  - `globals.css` 파일 끝 개행.
+- 리뷰가 지적했으나 **의도적으로 반영 안 함**:
+  - `lib/diagnosisResult.ts`·`lib/mockDiagnosisResult.ts` 에 `server-only` 미부착 — 계획 Global Constraints 의 "러너 없는 유닛 테스트 대상" 결정 유지. 현재 모든 클라이언트 import 가 `import type` 이라 런타임 누출 없음. 값 import 방지 가드는 post-MVP 검토.
+  - `let timer` hoist / effect 시작 시 `setView({kind:"polling"})` — 둘 다 eslint(`prefer-const`, `react-hooks/set-state-in-effect`) 위반. 기존 `const timer` 클로저 + `onRetry` 가 polling 세팅하는 패턴이 정답이라 원복.
+  - 폴링→결과 전환 `aria-live` — 카드 6개를 통째로 읽어 SR 장황해지는 역효과. 짧은 상태 알림은 Phase 3 a11y 패스에서.
+- **머지 후 필수 후속**: Supabase 연결 환경에서 `제출 → /diagnosis/[id] → curl POST /api/dev/mock-result/<id> → 6카드` / `?outcome=failed → FailedNotice` / `?_test_maxAttempts=2 → timeout` 3경로 실측. 이 계약 위에 Phase B(n8n)·Phase 3(상담)이 쌓임.
+- **배포 판단**: 이 브랜치만 프로덕션에 올라가면 `N8N_WEBHOOK_URL` 미설정 + `mock-result` 프로덕션 404 → 모든 진단이 3분 timeout(상담 CTA)로 종결. Mock-우선 설계상 예상 동작이나, Phase B 완료 전까지 프로덕션에서 "완료된 진단 결과"를 기대하면 안 됨.
+
 ---
 
 ## Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4
