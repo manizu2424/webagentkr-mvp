@@ -191,11 +191,19 @@
 - [x] **A4 상담 폼** `app/consultation/page.tsx` (구 3.2) — 진단 wizard 필드 프리미티브·시각 언어 재사용.
       `?diagnosisId=` 있으면 연락처 프리필/생략(lead 재사용), 없으면 전체 입력. 필드: 연락처 + `preferredDate`
       + `consultationType`(=`consultingMethod` 값) + 자유 문의(선택) + 개인정보 동의 + 허니팟.
-- [ ] **A5 결과 페이지 CTA 배선** (구 3.2) — `ResultCards`·`FailedNotice` CTA → `/consultation?diagnosisId=<id>`.
+- [x] **A5 결과 페이지 CTA 배선** (구 3.2) — `ResultCards`·`FailedNotice` CTA → `/consultation?diagnosisId=<id>`.
       (`FailedNotice` 는 Phase 2 에서 이미 연결. `ResultCards` 에 상담 CTA + `consultation_cta_click` `track()` 추가.)
-- [ ] **A6 검증** — build/lint/tsc, curl(허니팟·동의누락·rate limit·`diagnosisId` 유무 2경로), 폼 Playwright.
+- [x] **A6 검증** — build/lint/tsc, curl(허니팥·동의누락·rate limit·`diagnosisId` 유무 2경로), 폼 Playwright.
       DB 통합은 Supabase 연결 시.
 - A 에 심는 `track()` 호출부: `consultation_cta_click`(A5), `consultation_submit`(A2 성공 직후). gtag 로드·동의는 묶음 D — `track()` 스텁이 no-op 이라 지금 심어도 안전(Phase 1 step 이벤트와 동일).
+
+### 묶음 A 이탈·메모 (2026-09-08)
+- 에러 키를 스펙 §4.4(`bad_json`/`invalid`)가 아니라 기존 `POST /api/diagnoses` 규약(`invalid_json`/`validation`)으로 통일.
+- `consultationSubmissionSchema`에 `leadId` 필드는 원래 없었음(스펙 §8의 "제거" 항목은 무효) — `diagnosisId` 역참조 / email upsert 만 씀.
+- 상담 폼 동의 체크박스는 진단 폼 `ConsentCheckbox` 를 그대로 재사용(현재 `/privacy` 링크만). `/terms` 링크 + 상담용 문구는 묶음 C.
+- 성공 화면 안내 문구는 `{/* TODO 묶음 C */}` — 확정 대기.
+- DB 통합(제출→`consultations` 행 + Telegram, `diagnosis_not_found`, 성공 화면)은 이 환경에 Supabase 없어 미검증 — curl 에러 경로 + Playwright 렌더로 대체. 묶음 B 착수 전 1회 관통 권장.
+- serviceTagging ④ n8n Automation 판정에 "LLM 마커 없음" 조건 추가(스펙 §3.2 해석) — Mock 픽스처 스택이 항상 n8n 을 포함해 기본값이 죽는 문제 회피.
 
 ### 묶음 C — 법적 고지  (A 다음)
 

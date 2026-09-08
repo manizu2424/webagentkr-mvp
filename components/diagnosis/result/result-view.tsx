@@ -25,7 +25,7 @@ export function ResultView({
     case "polling":
       return <ProcessingView />;
     case "completed":
-      return <ResultCards result={view.result} />;
+      return <ResultCards result={view.result} diagnosisId={diagnosisId} />;
     case "failed":
       return <FailedNotice variant="failed" diagnosisId={diagnosisId} />;
     case "timeout":
