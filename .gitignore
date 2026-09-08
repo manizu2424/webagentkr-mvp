@@ -42,3 +42,4 @@ n8n.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.playwright-mcp/
