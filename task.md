@@ -179,14 +179,14 @@
 전환 퍼널의 마지막 조각: 결과/실패 페이지 → 상담 신청 → Telegram. Mock 불필요, DB(`consultations`
 0001 에 이미 있음)만 있으면 됨.
 
-- [ ] **A1 `lib/serviceTagging.ts`** (구 3.3 · 결함 #8 · D3) — `diagnosis_results`(`recommended_stack`·`priorityTasks`)
+- [x] **A1 `lib/serviceTagging.ts`** (구 3.3 · 결함 #8 · D3) — `diagnosis_results`(`recommended_stack`·`priorityTasks`)
       + `diagnoses.purpose`·`budget_range` → 서비스 5종 중 하나. 규칙: 기획서 §11.3. 순수 함수, 단위 검증.
       `diagnosisId` 없거나 결과행 없음(직접 상담·FAILED 진단) → 기본값/`null` (A 설계에서 확정).
-- [ ] **A2 `POST /api/consultations`** (구 3.1 · §4.3 · 결함 #11) — 허니팟→200 무저장 / `consentAgreed!==true`→400
+- [x] **A2 `POST /api/consultations`** (구 3.1 · §4.3 · 결함 #11) — 허니팟→200 무저장 / `consentAgreed!==true`→400
       / rate limit(`clientIp.ts`)→429 → `diagnosisId` 있으면 `diagnoses.lead_id` 역참조로 lead 재사용,
       없으면 `leads.email` unique upsert → A1 로 `suggested_service_type` 계산 → `consultations` insert(`NEW`)
       → Telegram(`[신규 상담]` + 추정 서비스 유형) → `{ consultationId }`.
-- [ ] **A3 서버 재검증** (구 3.7) — `consentAgreed` + 한국 휴대폰 정규식을 A2 에서 재검증. `consultationSubmissionSchema`
+- [x] **A3 서버 재검증** (구 3.7) — `consentAgreed` + 한국 휴대폰 정규식을 A2 에서 재검증. `consultationSubmissionSchema`
       이미 존재 — 한글 `error:` 메시지 보강 포함.
 - [ ] **A4 상담 폼** `app/consultation/page.tsx` (구 3.2) — 진단 wizard 필드 프리미티브·시각 언어 재사용.
       `?diagnosisId=` 있으면 연락처 프리필/생략(lead 재사용), 없으면 전체 입력. 필드: 연락처 + `preferredDate`
