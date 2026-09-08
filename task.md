@@ -170,17 +170,63 @@
 
 ## Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4
 
-- [ ] 3.1 `POST /api/consultations` (기술 스펙 §4.3 + 결함 수정)
-  - 허니팟/rate limit → **`diagnosisId` → `diagnoses.lead_id` 역참조로 lead 재사용, 신규는 `leads.email` unique 기준 upsert** (결함 #11)
-  - consultations insert(NEW) → Telegram
-- [ ] 3.2 상담 폼 페이지 + 결과 페이지 CTA 연동
-- [ ] 3.3 **서비스 유형 자동 태깅을 `lib/serviceTagging.ts`에 구현** — 상담 신청 시점에 `diagnosis_results`를 읽어 계산(결함 #8, D3 결정). n8n이 아님. `suggested_service_type` 저장 + Telegram 표시.
-- [ ] 3.4 관리자 화면(기획서 §11): 로그인(Supabase Auth), 대시보드 숫자 카드, 진단 목록/상세, 상담 목록/상세, 상태 변경·메모. 별도 API 없이 `lib/supabase/client.ts` + RLS 직접 조회(기술 스펙 §4.4). `app/admin/layout.tsx` 세션 체크.
-- [ ] 3.5 개인정보처리방침(기획서 §16.1 + 결함 #15): **실제 인프라 기준 국외 이전 고지** — Telegram(상호 전송), Contabo VPS(독일), Supabase 리전, OpenAI. AI 호출에서 식별정보 제외 사실도 반영. (전문가 검토는 사용자 몫)
-- [ ] 3.6 **이용약관 페이지** (기획서 §16.2 — 어느 범위 목록에도 없던 항목, 결함 #14)
-- [ ] 3.7 개인정보 수집 동의 서버 재검증 + 전화번호 형식 검증 확인
-- [ ] 3.8 GA4 이벤트(기획서 §14.4, 기술 스펙 §9): `step{1..5}_view/complete`, `step5_submit`, `diagnosis_result_view`, `consultation_cta_click`, `consultation_submit` — 삽입 위치는 기술 스펙 §9 표
-- [ ] 3.9 GA4 쿠키/분석 동의 처리 (결함 #22 — 스펙 미정의)
+> **분해 (2026-09-08):** 3.1~3.9 는 서로 독립적인 4개 서브시스템이다. 각 묶음이 자체
+> spec → plan → 구현 사이클을 갖는다(Phase 1·2 방식). 착수 순서 **A → C → B → D**.
+> 원래 번호(3.1~3.9) 대응은 각 태스크 끝에 표기.
+
+### 묶음 A — 상담 흐름  (첫 착수 · 브랜치 `feat/consultation-flow`)
+
+전환 퍼널의 마지막 조각: 결과/실패 페이지 → 상담 신청 → Telegram. Mock 불필요, DB(`consultations`
+0001 에 이미 있음)만 있으면 됨.
+
+- [ ] **A1 `lib/serviceTagging.ts`** (구 3.3 · 결함 #8 · D3) — `diagnosis_results`(`recommended_stack`·`priorityTasks`)
+      + `diagnoses.purpose`·`budget_range` → 서비스 5종 중 하나. 규칙: 기획서 §11.3. 순수 함수, 단위 검증.
+      `diagnosisId` 없거나 결과행 없음(직접 상담·FAILED 진단) → 기본값/`null` (A 설계에서 확정).
+- [ ] **A2 `POST /api/consultations`** (구 3.1 · §4.3 · 결함 #11) — 허니팟→200 무저장 / `consentAgreed!==true`→400
+      / rate limit(`clientIp.ts`)→429 → `diagnosisId` 있으면 `diagnoses.lead_id` 역참조로 lead 재사용,
+      없으면 `leads.email` unique upsert → A1 로 `suggested_service_type` 계산 → `consultations` insert(`NEW`)
+      → Telegram(`[신규 상담]` + 추정 서비스 유형) → `{ consultationId }`.
+- [ ] **A3 서버 재검증** (구 3.7) — `consentAgreed` + 한국 휴대폰 정규식을 A2 에서 재검증. `consultationSubmissionSchema`
+      이미 존재 — 한글 `error:` 메시지 보강 포함.
+- [ ] **A4 상담 폼** `app/consultation/page.tsx` (구 3.2) — 진단 wizard 필드 프리미티브·시각 언어 재사용.
+      `?diagnosisId=` 있으면 연락처 프리필/생략(lead 재사용), 없으면 전체 입력. 필드: 연락처 + `preferredDate`
+      + `consultationType`(=`consultingMethod` 값) + 자유 문의(선택) + 개인정보 동의 + 허니팟.
+- [ ] **A5 결과 페이지 CTA 배선** (구 3.2) — `ResultCards`·`FailedNotice` CTA → `/consultation?diagnosisId=<id>`.
+      (`FailedNotice` 는 Phase 2 에서 이미 연결. `ResultCards` 에 상담 CTA + `consultation_cta_click` `track()` 추가.)
+- [ ] **A6 검증** — build/lint/tsc, curl(허니팟·동의누락·rate limit·`diagnosisId` 유무 2경로), 폼 Playwright.
+      DB 통합은 Supabase 연결 시.
+- A 에 심는 `track()` 호출부: `consultation_cta_click`(A5), `consultation_submit`(A2 성공 직후). gtag 로드·동의는 묶음 D — `track()` 스텁이 no-op 이라 지금 심어도 안전(Phase 1 step 이벤트와 동일).
+
+### 묶음 C — 법적 고지  (A 다음)
+
+- [ ] **C1 개인정보처리방침** `app/(marketing)/privacy/page.tsx` (구 3.5 · 결함 #15) — 실제 인프라 기준 국외 이전 고지:
+      Telegram(상호 전송), Contabo VPS(독일), Supabase 리전, OpenAI. AI 호출에서 식별정보 제외 사실 반영.
+      초안 + `{/* 전문가 검토 필요 */}` 마커(전문가 검토는 사용자 몫).
+- [ ] **C2 이용약관** `app/terms/page.tsx` (구 3.6 · 신규 · 결함 #14) — 최소 이용약관 초안. 책임 범위·이용 조건.
+- [ ] **C3 링크 연결** — 랜딩 푸터 + 진단/상담 폼 동의 문구 → 두 페이지 링크.
+
+### 묶음 B — 관리자 화면  (C 다음 · 별도 API 없음, RLS 직접 조회 §4.4)
+
+- [ ] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** 확인,
+      관리자 계정 1개 수동 생성(+2FA). 코드 불가.
+- [ ] **B2 `app/admin/layout.tsx` 세션 게이트** — 서버 세션 확인 → 미인증 시 `/admin/login` 리다이렉트.
+- [ ] **B3 로그인** `app/admin/login/page.tsx` — Supabase Auth 이메일/비번(`lib/supabase/client.ts`).
+- [ ] **B4 대시보드** `app/admin/page.tsx` — 숫자 카드(오늘 진단 수, 누적 상담 수 등). RLS `authenticated` 직접 조회.
+- [ ] **B5 진단 목록 + 상세** `/admin/diagnoses`(+`[id]`) — 진단 입력값 + `diagnosis_results` + 상태.
+- [ ] **B6 상담 목록 + 상세 + 상태변경 + 메모** `/admin/consultations`(+`[id]`) — `NEW→CONTACT_PENDING→…` 전이,
+      메모 저장. RLS `admin_update_consultations`.
+- [ ] **B7 검증** — 인증 리다이렉트, RLS 경계(anon 차단), 상태 전이.
+
+### 묶음 D — GA4  (마지막)
+
+- [ ] **D1 쿠키/분석 동의 UI** (구 3.9 · 결함 #22, 스펙 미정의) — 최소 동의 배너. 거부 시 gtag 미로드. `localStorage` 저장.
+- [ ] **D2 gtag.js 조건부 로드** — 동의 시에만 `NEXT_PUBLIC_GA4_MEASUREMENT_ID` 로드. `track()` 그대로.
+- [ ] **D3 이벤트 배선 확인** (구 3.8 · §9 표) — `step{1..5}_view/complete`·`step5_submit`(Phase 1)·`diagnosis_result_view`(Phase 2)·`consultation_cta_click`·`consultation_submit`(묶음 A) 누락·순서 점검.
+- [ ] **D4 검증** — 동의 전/후 gtag 로드 여부, 이벤트 발화.
+
+### 의존성
+- **A → C → B → D**. C 는 짧고 A 상담 폼 동의 문구가 C 링크 필요. B 는 B1(사용자 Supabase 설정) 선행, A·C 데이터 있으면 검증 쉬움. D 는 A 이벤트 호출부가 있어야 §9 표 완결.
+- A·C·D 는 이 개발 환경에서 코드만으로 진행 가능(DB 통합 검증만 Supabase 연결 시).
 
 ---
 
@@ -267,6 +313,8 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-04: **D1~D5 전원 권장안대로 확정.** 진단 폼에 도입 목적·담당 인원 추가하고 현재 처리 방식 제거, 선택지 한글 라벨 저장, 서비스 태깅을 상담 시점 Next.js로, `difficulty` 컬럼 삭제, 백업은 Free + cron `pg_dump`. Phase 0 착수 가능 상태.
 - 2026-09-04: **Phase 0 완료.** `create-next-app@latest`가 **Next.js 16.3.4 / React 19.2.8 / Tailwind v4 / zod 4.5**를 설치함(스펙·초기 계획의 "Next 15" 가정과 다름 — 스텁 수준에서는 영향 없음, `params`는 Promise·`PageProps`/`RouteContext`는 전역 생성 타입). shadcn 스타일 `base-nova`. 검증 결과: `next build` 성공(16 라우트), `eslint` 0건, `tsc --noEmit` 청정, `docker compose config` 유효(포트 `127.0.0.1` 바인딩 확인), `0001_init.sql`을 Postgres 16에 적용해 5테이블+RLS+정책6+트리거2 생성 및 CHECK/unique/트리거 동작 확인, `rateLimit`(6번째 차단·버킷 분리)·`clientIp`(cf 우선·xff 파싱·fallback) 유닛 통과. `git init` + 초기 커밋.
 - 2026-09-04: **Phase 1을 라운드로 분할.** 라운드 1 = 랜딩 페이지만(1.1), 폼·API(1.2~1.7)는 라운드 2. 1.1을 `frontend-design`으로 구현 — 워크플로 스파인 + 히어로 파이프라인 컨셉, Pretendard+Plex Mono, 라이트 전용, RSC 전용. 결함 #13 방식을 `idempotencyKey` + `diagnoses` UNIQUE로 확정(마이그레이션 `0002`, 라운드 2). 랜딩의 TODO 문구(구축 절차·신뢰 요소·FAQ·사업자 정보)는 확정 대기.
+- 2026-09-08: **Phase 2 완료·머지** (PR #2 → `main` `2d02c45`). 결과 파이프라인 Mock 우선 — 매핑 함수/픽스처, `GET /api/diagnoses/[id]`, `POST /api/dev/mock-result/[id]`, 폴링 아일랜드 + 6카드, frontend-design 패스. 최종 리뷰 Critical 0 → fix wave(`463f2fe`, 폴 겹침 방지·404 문구 분리·remount 가드) → 범위 재리뷰 clean. 실 DB 해피패스는 Supabase 연결 시 실측(미실행).
+- 2026-09-08: **Phase 3 를 4묶음으로 분해.** A(상담 흐름) / C(법적 고지) / B(관리자) / D(GA4), 착수 순서 A→C→B→D. 각 묶음 자체 spec→plan→구현. A 부터 착수(브랜치 `feat/consultation-flow`), 상세는 위 Phase 3 섹션.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
