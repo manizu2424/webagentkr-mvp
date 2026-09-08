@@ -188,7 +188,7 @@
       → Telegram(`[신규 상담]` + 추정 서비스 유형) → `{ consultationId }`.
 - [x] **A3 서버 재검증** (구 3.7) — `consentAgreed` + 한국 휴대폰 정규식을 A2 에서 재검증. `consultationSubmissionSchema`
       이미 존재 — 한글 `error:` 메시지 보강 포함.
-- [ ] **A4 상담 폼** `app/consultation/page.tsx` (구 3.2) — 진단 wizard 필드 프리미티브·시각 언어 재사용.
+- [x] **A4 상담 폼** `app/consultation/page.tsx` (구 3.2) — 진단 wizard 필드 프리미티브·시각 언어 재사용.
       `?diagnosisId=` 있으면 연락처 프리필/생략(lead 재사용), 없으면 전체 입력. 필드: 연락처 + `preferredDate`
       + `consultationType`(=`consultingMethod` 값) + 자유 문의(선택) + 개인정보 동의 + 허니팟.
 - [ ] **A5 결과 페이지 CTA 배선** (구 3.2) — `ResultCards`·`FailedNotice` CTA → `/consultation?diagnosisId=<id>`.
