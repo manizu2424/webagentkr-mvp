@@ -46,7 +46,7 @@
 - [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D
   - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`, 2026-09-08). DB 통합 검증만 Supabase 연결 시 대기
   - [x] 묶음 C 법적 고지 — 브랜치 `feat/legal-pages` (2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
-  - [ ] 묶음 B 관리자 화면 — B1(사용자 Supabase 설정) 선행
+  - [x] 묶음 B 관리자 화면 — 브랜치 `feat/admin-console` (2026-09-09). SSR 세션 게이트 + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). DB 통합 검증만 Supabase 연결 시
   - [ ] 묶음 D GA4 — 마지막
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
@@ -231,15 +231,27 @@
 
 ### 묶음 B — 관리자 화면  (C 다음 · 별도 API 없음, RLS 직접 조회 §4.4)
 
-- [ ] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** 확인,
-      관리자 계정 1개 수동 생성(+2FA). 코드 불가.
-- [ ] **B2 `app/admin/layout.tsx` 세션 게이트** — 서버 세션 확인 → 미인증 시 `/admin/login` 리다이렉트.
-- [ ] **B3 로그인** `app/admin/login/page.tsx` — Supabase Auth 이메일/비번(`lib/supabase/client.ts`).
-- [ ] **B4 대시보드** `app/admin/page.tsx` — 숫자 카드(오늘 진단 수, 누적 상담 수 등). RLS `authenticated` 직접 조회.
-- [ ] **B5 진단 목록 + 상세** `/admin/diagnoses`(+`[id]`) — 진단 입력값 + `diagnosis_results` + 상태.
-- [ ] **B6 상담 목록 + 상세 + 상태변경 + 메모** `/admin/consultations`(+`[id]`) — `NEW→CONTACT_PENDING→…` 전이,
+- [x] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** 확인,
+      관리자 계정 1개 수동 생성(+2FA). 코드 불가. (검증용 `verify-admin@webagent.test` 는 `scratchpad/` 스크립트로 생성)
+- [x] **B2 `app/admin/layout.tsx` 세션 게이트** — 서버 세션 확인 → 미인증 시 `/admin/login` 리다이렉트. `proxy.ts`(신규) 1차 게이트 + 레이아웃 재확인.
+- [x] **B3 로그인** `app/admin/login/page.tsx` — Supabase Auth 이메일/비번(`lib/supabase/client.ts`).
+- [x] **B4 대시보드** `app/admin/page.tsx` — YAGNI 로 별도 대시보드 미구현. `/admin` = 상담 목록 홈(사용자 확정, 이탈·메모).
+- [x] **B5 진단 목록 + 상세** `/admin/diagnoses/[id]` 읽기 전용 — 진단 입력값 + `diagnosis_results` 6필드(있으면) + 상태. 독립 목록 없음(상담 상세에서 링크로만, 이탈·메모).
+- [x] **B6 상담 목록 + 상세 + 상태변경 + 메모** `/admin/consultations`(+`[id]`) — `<select>` 7값 자유 전이,
       메모 저장. RLS `admin_update_consultations`.
-- [ ] **B7 검증** — 인증 리다이렉트, RLS 경계(anon 차단), 상태 전이.
+- [x] **B7 검증** — build/lint/tsc 0, Playwright(로그인·목록·필터·상세·상태·메모·404·리다이렉트), Supabase REST 단언(service-role).
+
+### 묶음 B 이탈·메모 (2026-09-09)
+
+- 브랜치 `feat/admin-console`. spec `docs/superpowers/specs/2026-09-09-admin-console-design.md` + plan `docs/superpowers/plans/2026-09-09-admin-console.md` on `main` 예정.
+- 인증 = **SSR 게이트** (사용자 확정). `middleware.ts`(신규) + `lib/supabase/session-client.ts`(신규, anon+세션). CLAUDE.md "브라우저 클라이언트 직접 조회" 서술보다 우선 — service_role은 여전히 서버 전용, 세션 클라이언트는 RLS `authenticated` 존중.
+- spec·plan 은 게이트 파일을 `middleware.ts` 로 표기하나, Next 16 에서 `middleware.ts` 는 폐기·`proxy.ts` 로 개명됨 → 두 문서에 정오표 추가(커밋 `b248ee6`). 실제 파일은 `proxy.ts`.
+- proxy.ts (Next 16, middleware.ts 폐기·개명) — 세션 쿠키 갱신 + /admin/* 게이트. 리다이렉트 응답에 갱신 쿠키 전파.
+- `/admin` = 상담 목록 홈. 별도 대시보드·독립 진단 목록 없음(YAGNI, 사용자 확정). 진단은 상담 상세에서 링크로만.
+- 상태 전이 = `<select>` 7값 자유 전이(가드 없음). 상태 변경 즉시 저장, 메모는 버튼 저장. server action 반환 `{ok:true}|{error}`.
+- 마이그레이션·env 없음. `consultations.memo`·RLS 정책은 0001에 이미 존재.
+- 검증: build/lint/tsc 0, Playwright(로그인·목록·필터·상세·상태·메모·404·리다이렉트), Supabase REST 단언(service-role). 검증용 관리자(`verify-admin@webagent.test`) + 시드 상담/진단은 `scratchpad/` 스크립트로 생성 후 **삭제**. (auth 유저 삭제가 권한상 막히면 사용자가 대시보드에서 제거)
+- frontend-design 패스 없음(내부 도구, `--wak-*` 토큰만).
 
 ### 묶음 D — GA4  (마지막)
 

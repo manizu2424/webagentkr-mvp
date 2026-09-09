@@ -43,3 +43,4 @@ n8n.env
 *.tsbuildinfo
 next-env.d.ts
 .playwright-mcp/
+scratchpad/
