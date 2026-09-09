@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Placeholder } from "@/components/marketing/legal/shell";
+import { CookieSettingsLink } from "@/components/analytics/cookie-settings-link";
 
 export function SiteFooter() {
   return (
@@ -17,6 +18,7 @@ export function SiteFooter() {
           <Link href="/terms" className="hover:text-ink">
             이용약관
           </Link>
+          <CookieSettingsLink />
         </nav>
       </div>
 

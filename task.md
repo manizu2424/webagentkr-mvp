@@ -43,11 +43,11 @@
     - frontend-design 패스(Task 8, `4299cd3`): 5단계 진행률을 랜딩 히어로 파이프라인 컨셉(다이아몬드 노드 + 헤어라인 커넥터)으로 재설계, `--wak-danger` 토큰 도입해 오류 색상 통일(raw `red-*` 전량 교체), 접근성 버그 2건 수정(Tailwind v4 `outline-none`이 포커스 링 outline-style을 0으로 만드는 문제, `sr-only` 라디오 chip의 키보드 포커스 표시 부재 → `:has(:focus-visible)`로 해결), 탭 타겟 44px 이상 + `motion-reduce:transition-none` 가드
     - 검증: build/lint 통과, 0002 SQL, non-DB curl 3종, 폼 Playwright 흐름. DB 통합 검증은 Supabase 연결 시.
 - [~] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)  — 2.1~2.5 완료·머지 (PR #2, 2026-09-08). **2.6~2.9(실 n8n 워크플로우) 미착수** — n8n 인스턴스 필요(묶음 B 이후 "Phase B")
-- [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D
+- [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D. **묶음 A~D 전부 완료** (2026-09-09). 남은 것은 Phase B(실 n8n)뿐 — 별도 트랙
   - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`, 2026-09-08). DB 통합 검증만 Supabase 연결 시 대기
   - [x] 묶음 C 법적 고지 — 브랜치 `feat/legal-pages` (2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
   - [x] 묶음 B 관리자 화면 — 브랜치 `feat/admin-console` (2026-09-09). SSR 세션 게이트(`proxy.ts`) + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). SDD 서브에이전트 실행 + opus 최종 리뷰(Critical 1·Important 6 반영). 실 Supabase(리전 서울) B7 검증 13/13. **PR 대기(직접 머지)**
-  - [ ] 묶음 D GA4 — 마지막
+  - [x] 묶음 D GA4 — 브랜치 `feat/ga4` (2026-09-09). 분석 쿠키 동의 배너(옵트인) + 조건부 gtag.js + `track()` 동의 가드 + 푸터 "쿠키 설정" 철회. 이벤트 호출부 6종은 이미 존재 → 감사만(코드 무변경). 결함 #22 해소. `tsc`·`eslint`·`build` 0, Playwright 8경로. 마이그레이션·DB 무관
   - [ ] Phase B (`task.md` 2.6~2.9) — 실 n8n 워크플로우. n8n 인스턴스 필요
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
@@ -272,12 +272,23 @@
 - **DB 통합 검증은 실 Supabase(리전 서울)로 수행함** — B7 체크리스트 13/13 통과(미인증 리다이렉트, 로그인 실패/성공, anon RLS 차단, 필터 4종, 상세 2경로, 404, 상태 전이 DB 반영, 메모 저장/프리필, 진단 상세 COMPLETED/FAILED, 실 브라우저 로그아웃 재게이트). 검증 데이터 전량 삭제·시드 원상복구.
 - **머지 후 후속**: 없음(이 묶음은 스키마·env 무변경). CLAUDE.md 결함 #5(익명 로그인=`authenticated`)가 이 콘솔의 유일한 인가 전제이므로, Supabase Auth 설정을 배포 전 자동 확인 스크립트로 승격 권장(Phase 4).
 
-### 묶음 D — GA4  (마지막)
+### 묶음 D — GA4  (마지막 · 브랜치 `feat/ga4`, 2026-09-09)
 
-- [ ] **D1 쿠키/분석 동의 UI** (구 3.9 · 결함 #22, 스펙 미정의) — 최소 동의 배너. 거부 시 gtag 미로드. `localStorage` 저장.
-- [ ] **D2 gtag.js 조건부 로드** — 동의 시에만 `NEXT_PUBLIC_GA4_MEASUREMENT_ID` 로드. `track()` 그대로.
-- [ ] **D3 이벤트 배선 확인** (구 3.8 · §9 표) — `step{1..5}_view/complete`·`step5_submit`(Phase 1)·`diagnosis_result_view`(Phase 2)·`consultation_cta_click`·`consultation_submit`(묶음 A) 누락·순서 점검.
-- [ ] **D4 검증** — 동의 전/후 gtag 로드 여부, 이벤트 발화.
+- [x] **D1 쿠키/분석 동의 UI** (구 3.9 · 결함 #22, 스펙 미정의) — 하단 고정 비-모달 배너(`동의`/`거부`), `localStorage` `wak.analyticsConsent`. 미결정=거부와 동일(로드 없음, 배너 계속). 개인정보처리방침 §11 계약대로 옵트인.
+- [x] **D2 gtag.js 조건부 로드** — `consent==="granted"` **그리고** `NEXT_PUBLIC_GA4_MEASUREMENT_ID` 있을 때만 `next/script` 주입(동의 클릭 시 리로드 없이 라이브). 철회 시 `window['ga-disable-<ID>']=true` + `track()` 동의 가드로 즉시 정지. `/admin/*`·env 미설정 시 배너·스크립트 없음.
+- [x] **D3 이벤트 배선 확인** (구 3.8 · §9 표) — 6종 전부 §9 위치와 일치, 코드 변경 없음. `step5_complete` 부재는 의도(5단계는 제출, `state.step>prev` 안 됨 — 기획서 §14.4 목록과도 일치).
+- [x] **D4 검증** — `tsc`·`eslint`·`build` 0. Playwright 8경로: 신규 로드(배너·gtag 없음) / 동의(배너 사라짐·gtag 라이브·`dataLayer`) / 리로드 지속 / 거부 지속(gtag 없음·`track()` 무발화) / 푸터 "쿠키 설정" 재호출 / 철회 `ga-disable` / `/admin` 완전 제외 / env 미설정 배너 숨김·링크 no-op.
+
+### 묶음 D 이탈·메모 (2026-09-09)
+
+- **bounded 경로.** 동의 모델이 이미 병합된 개인정보처리방침 §11(옵트인)로 법적 고정, `track()` 가 이미 `window.gtag` 가드, 범위가 좁아 spec/plan 문서 없이 채팅 설계안 승인 → 바로 구현.
+- **동의 모드(Consent Mode v2) 아님.** 개인정보처리방침이 "동의한 경우에만 로드"라 gtag.js 자체를 동의 전 미주입. `consent:'denied'` 기본값으로 항상 로드하는 Google 권장 패턴은 문구와 충돌.
+- **상태 저장** = `localStorage` 키 `wak.analyticsConsent` (`granted`/`denied`, 없으면 미결정). `useSyncExternalStore`로 구독(같은 탭 커스텀 이벤트 + 다른 탭 `storage`). `set-state-in-effect` lint 회피 목적(마운트 후 localStorage 읽기).
+- **철회 UX** = 푸터 "쿠키 설정" 링크(`CookieSettingsLink`)가 `wak:consent-reopen` 이벤트로 배너 재호출. 마케팅 레이아웃 푸터에만 있어 `/diagnosis`·`/consultation`(푸터 없음)에서는 노출 안 됨 — 설계 시 수용(재방문은 마케팅 페이지 경유).
+- **granted→denied 세션 중** = `window['ga-disable-<ID>']=true` + `track()` 동의 가드. 강제 리로드 안 함. gtag 객체는 남지만 수집 중단.
+- **범위 밖(권장대로 유지)**: Microsoft Clarity → Phase 4.4. 동의 게이트/배너는 나중에 Clarity 도 같은 스위치에 물릴 수 있게 범용 설계(현재는 GA4 전용 주입만).
+- **`.env`** `NEXT_PUBLIC_GA4_MEASUREMENT_ID` 미설정 시 배너 자체를 숨김(로드할 게 없으면 동의 물을 이유 없음). `.env.example` 에 주석 추가.
+- **검증 방법**: `NEXT_PUBLIC_GA4_MEASUREMENT_ID=G-TEST12345 npm run dev` 로 gtag 로드 경로 확인, 미설정 dev 로 배너 숨김 확인. 실 GA4 속성 없이 스크립트 주입·`dataLayer`·`ga-disable` 플래그까지만 확인 — 실제 GA4 대시보드 수신은 배포 후 사용자 육안.
 
 ### 의존성
 - **A → C → B → D**. C 는 짧고 A 상담 폼 동의 문구가 C 링크 필요. B 는 B1(사용자 Supabase 설정) 선행, A·C 데이터 있으면 검증 쉬움. D 는 A 이벤트 호출부가 있어야 §9 표 완결.
@@ -355,7 +366,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 | #19 Map 누수 | 0.5 |
 | #20 CLI 플래그 | 0.1 |
 | #21 스키마 타입 | 0.3 |
-| #22 GA4 동의 | 3.9 |
+| #22 GA4 동의 | **묶음 D 해소** — 옵트인 동의 배너 + 동의 전 gtag 완전 미주입 |
 
 ---
 
@@ -378,6 +389,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-08: **묶음 A(상담 흐름) 완료·머지** (PR #3 → `main` `21130a9`). `lib/serviceTagging.ts`, `POST /api/consultations`, 상담 폼(`?diagnosisId=` 프리필/직접 입력 2경로), 결과 페이지 상담 CTA. 최종 리뷰 opus Critical 0(I-1 클라이언트 검증·I-2 DB 조회 가드 반영). DB 통합 검증은 Supabase 연결 시(PR #3 본문 체크리스트).
 - 2026-09-09: **묶음 C(법적 고지) 완료** (브랜치 `feat/legal-pages`). 개인정보처리방침(13절 + 국외이전·위탁 표) + 이용약관(10조 + 부칙) 초안, 공용 셸 `components/marketing/legal/`, 푸터 사업자 정보 라인, 진단 step5·상담 폼 "동의 간주" 문구 + 링크. 전부 `[확정 필요]` 플레이스홀더(전문가 검토는 사용자 몫 → Phase 4.7). 결함 #15 해소. `tsc`·`eslint`·`build` 0, Playwright 렌더 확인. DB·마이그레이션·env 무관.
 - 2026-09-09: **묶음 B(관리자 화면) 완료** (브랜치 `feat/admin-console`, base `a19d28f` → head `f57b5df`). SSR 인증 게이트(`proxy.ts` + `lib/supabase/session-client.ts`) + 로그인 + 상담 목록/상세(상태 전이·메모 server action) + 진단 상세(읽기 전용). 전용 API 없이 RLS `authenticated` 직접 조회. SDD 서브에이전트 실행(7 태스크, 각 구현+리뷰) + opus 최종 전체 리뷰 → Critical 1(문서 내 검증계정 평문 비번 — 계정 삭제·redact) + Important 6(server action 인가 가드·0행 저장 실패·layout 방어 표현·KST 날짜·에러 바운더리·`toApiResult` 재사용) 반영, 스코프 재리뷰 clean. 실 Supabase(리전 서울) B7 검증 13/13. 마이그레이션·env·스키마 무변경. 상세는 "묶음 B 최종 전체 브랜치 리뷰".
+- 2026-09-09: **묶음 D(GA4) 완료** (브랜치 `feat/ga4`). bounded 경로(spec/plan 문서 없음, 채팅 설계안 승인 후 구현). `lib/consent.ts`(localStorage + 커스텀 이벤트) + `components/analytics/{analytics-consent,cookie-settings-link}.tsx` + `lib/analytics.ts` `track()` 동의 가드 + 루트 레이아웃 마운트 + 푸터 링크. 옵트인(개인정보처리방침 §11 계약), 동의 전 gtag 완전 미주입, `/admin`·env 미설정 제외, 철회는 `ga-disable` 플래그로 리로드 없이. D3 이벤트 감사 결과 6종 전부 §9 위치 일치 → 호출부 코드 무변경. `tsc`·`eslint`·`build` 0, Playwright 8경로 통과. 결함 #22 해소. 마이그레이션·DB 무관. Clarity 는 Phase 4.4 유지. 상세는 "묶음 D 이탈·메모".
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
