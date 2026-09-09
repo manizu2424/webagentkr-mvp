@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-09-admin-console-design.md` (executor는 이 스펙과 계획을 함께 읽는다)
 
+> **정오표 (2026-09-09, Task 1 실행 중 확정):** Next 16은 `middleware.ts` 파일 규약을 폐기하고 `proxy.ts`로 개명했다(`node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`). 아래 본문의 `middleware.ts` / `export async function middleware` / 빌드 로그 `ƒ Middleware`는 전부 **`proxy.ts` / `export async function proxy` / `ƒ Proxy`**로 읽는다. `config.matcher`·동작은 동일. SDD 원장 참조.
+
 ## Global Constraints
 
 - **브랜치 `feat/admin-console`에 로컬 커밋. push 금지.** 매 커밋 끝에:

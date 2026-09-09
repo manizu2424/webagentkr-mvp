@@ -4,7 +4,8 @@
 - 범위: `task.md` Phase 3 묶음 B (B2~B7) — 관리자 인증 게이트, 로그인, 상담 목록(홈), 상담 상세(상태 변경 + 메모), 진단 상세, 검증. B1(Supabase Auth 잠금 + 관리자 계정)은 사용자 작업으로 **완료·검증됨**(2026-09-09).
 - 근거: `docs/개발_착수_기술_스펙.md` §1.1 · §3.1 · §4.4, `docs/개발자용_통합_MVP_기획서.md` §8.1 · §9.5 · §11, `CLAUDE.md` "인증 & 접근 제어 모델" · "알려진 스펙 결함" #5, `docs/decisions.md` D2(옵션 라벨), `supabase/migrations/0001_init.sql`(RLS 정책 `admin_*`)
 - 선행: Phase 1·2·묶음 A·C 머지됨. `leads`·`diagnoses`·`diagnosis_results`·`consultations` 스키마 + RLS 정책, `lib/supabase/{server,client}.ts`, `lib/options.ts`, `--wak-*` 토큰, `lib/utils.ts`(`cn`) 준비됨. `app/admin/{layout,login/page,page,diagnoses/[id]/page,consultations/[id]/page}.tsx`는 5개 다 스텁. `middleware.ts`·`lib/supabase/session-client.ts`·`components/admin/*`는 없음. 실 Supabase 연결됨(리전 서울), `.env`에 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_ANON_KEY`·`SUPABASE_SERVICE_ROLE_KEY` 채워짐.
-- 설치 버전: Next.js 16.3.4 (Turbopack), React 19.2.8, `@supabase/ssr` ^0.12.5, `@supabase/supabase-js` ^2.114.0. Next 16 유의: `cookies()`/`headers()`는 async, `middleware.ts`는 리포 루트, `PageProps<'/route'>`/`LayoutProps<'/'>`는 전역 생성 타입.
+- 설치 버전: Next.js 16.3.4 (Turbopack), React 19.2.8, `@supabase/ssr` ^0.12.5, `@supabase/supabase-js` ^2.114.0. Next 16 유의: `cookies()`/`headers()`는 async, `PageProps<'/route'>`/`LayoutProps<'/'>`는 전역 생성 타입.
+- **정오표 (Task 1 실행 중 확정):** Next 16은 `middleware.ts`를 폐기하고 **`proxy.ts`**(리포 루트, `export async function proxy`, 빌드 로그 `ƒ Proxy`)로 개명. 아래 §3.2 등의 `middleware.ts`/`middleware` 표기는 전부 `proxy.ts`/`proxy`로 읽는다. `config.matcher`·동작 동일.
 
 ## 1. 목표와 비목표
 
