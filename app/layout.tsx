@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics/analytics-consent";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_TITLE,
+  OG_IMAGE,
+  SITE_NAME,
+  SITE_URL,
+  TITLE_TEMPLATE,
+} from "@/lib/siteMeta";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +22,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WEBAGENT.KR — AI로 일하는 회사를 만듭니다",
-  description:
-    "중소기업 반복 업무를 AI가 분석해 자동화 가능성을 진단하고 맞춤 결과를 보여드립니다.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: DEFAULT_TITLE, template: TITLE_TEMPLATE },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "ko_KR",
+    url: SITE_URL,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

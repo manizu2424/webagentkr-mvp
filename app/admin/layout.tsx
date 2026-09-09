@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { createSessionClient } from "@/lib/supabase/session-client";
 import { AdminShell } from "@/components/admin/admin-shell";
+
+// 관리자 영역 — 색인 금지 (robots.ts 의 Disallow 와 이중).
+export const metadata: Metadata = {
+  title: "관리자",
+  robots: { index: false, follow: false },
+};
 
 // proxy.ts 가 /admin/* 미인증 접근을 /admin/login 으로 돌린다 → 세션 없이 여기 도달하는 건
 // 로그인 페이지뿐이다. 그때는 셸(헤더/로그아웃) 없이 폼만 렌더한다.

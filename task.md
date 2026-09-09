@@ -322,7 +322,11 @@
 - [ ] 4.1 고객 결과 이메일 발송(Resend)
 - [ ] 4.2 자동화 사례 상세 페이지
 - [ ] 4.3 MDX 블로그 3개(신뢰 자료 목적, 기획서 §13)
-- [ ] 4.4 SEO 메타데이터, `sitemap`, `robots.txt`, Open Graph, Microsoft Clarity
+- [x] 4.4 SEO 메타데이터, `sitemap`, `robots.txt`, Open Graph, Microsoft Clarity — 브랜치 `feat/seo` (2026-09-09, bounded).
+  `lib/siteMeta.ts`(SITE_URL + `pageMetadata()` 헬퍼) · `app/{sitemap,robots,opengraph-image,icon}.ts(x)` · 루트+페이지별 `metadata`
+  (홈 JSON-LD Organization+WebSite) · per-user 결과/스텁/`/admin` noindex · Clarity 를 `analytics-consent.tsx` 동의 게이트에 배선
+  (`NEXT_PUBLIC_CLARITY_PROJECT_ID`, 철회 시 `clarity("stop")`) · privacy §6·§7·§11 에 Microsoft(미국) 행 추가(초안 → 4.7 검토).
+  `tsc`·`eslint`·`build` 0, curl/Playwright 검증. **`NEXT_PUBLIC_SITE_URL` 배포 시 설정 필요**(폴백 `https://webagent.kr`). 상세는 "4.4 이탈·메모".
 - [ ] 4.5 Contabo Docker 실제 배포 + **DB 백업 (D5: Free + cron `pg_dump` 일 1회, 7일 로테이션, 오프사이트 복사)** — P0 항목이므로 출시 전 완료 필요(결함 #14, #18)
   - **복원 절차까지 실제로 검증**해야 완료 처리. 첫 계약 성사 시 Supabase Pro 전환.
 - [ ] 4.6 출시 전 QA 체크리스트(기획서 §17.2):
@@ -340,6 +344,19 @@
   - **Supabase 리전** = 서울 `ap-northeast-2` 확정(2026-09-09) → privacy 국외이전 표 `[리전 확정 필요]` 를 "대한민국(서울)" 로 교체 +
     데이터는 국내 저장·수탁자 본사는 미국 → "국외 이전 해당 여부" 자체를 변호사가 판단(표에 남길지/위탁 표로 옮길지)
   - 시행일: 개인정보처리방침 · 이용약관 / 이용약관 관할 법원
+  - **Microsoft Clarity 국외 이전**(4.4 에서 추가) — privacy §6 위탁 표·§7 국외이전 표에 `Microsoft Corporation`(미국) 행 초안 반영됨. 변호사 검토 대상.
+
+### 4.4 이탈·메모 (2026-09-09)
+
+- 브랜치 `feat/seo`. bounded 경로(spec/plan 문서 없음). 마이그레이션·DB 무관.
+- **신규**: `lib/siteMeta.ts`(`SITE_URL` 폴백 `https://webagent.kr`, `pageMetadata({title,description,path,index})` 헬퍼 — canonical·OG·twitter 단일 소스, `OG_IMAGE` 상수), `app/sitemap.ts`(5 URL), `app/robots.ts`(`Disallow: /admin/`·`/api/` + `Sitemap`·`Host`), `app/opengraph-image.tsx`(`ImageResponse` 1200×630, @vercel/og 번들 폰트가 라틴 전용이라 **워드마크+라틴 문구만** — 한글 태그라인 tofu 회피), `app/icon.tsx`(32×32 "W" 모노그램).
+- **수정**: `app/layout.tsx`(`metadataBase`, `title` 템플릿 `%s · WEBAGENT.KR`, 기본 OG/twitter/robots), 홈·`/diagnosis`·`/consultation`·`/privacy`·`/terms` 페이지별 `metadata`, 홈에 `Organization`+`WebSite` JSON-LD 인라인, `/diagnosis/[id]`·`/about`·`/cases`·`app/admin/layout.tsx` → `robots: noindex,nofollow`.
+- **OG 이미지 자동 병합 함정**: 루트에 `openGraph` 를 명시하면 `app/opengraph-image.tsx` 자동 이미지가 병합 안 됨(특히 route group `(marketing)`). → `OG_IMAGE` 를 `openGraph.images`/`twitter.images` 에 **명시적으로** 넣어 해결.
+- **`title: undefined` 함정**: `pageMetadata` 가 `title` 키를 undefined 로라도 넘기면 레이아웃 `title.default` 폴백이 안 걸림 → 홈에 `<title>` 누락. `title` 있을 때만 스프레드하도록 수정.
+- **Clarity** = `analytics-consent.tsx` 에 GA4 와 나란히 배선. `NEXT_PUBLIC_CLARITY_PROJECT_ID` 있을 때만, 동의 시에만 주입. 철회 시 `window.clarity?.("stop")`(GA4 는 `ga-disable` 플래그). 배너 문구는 설정된 도구만 나열(둘 다면 "A와 B"). `/admin`·둘 다 미설정 시 배너·스크립트 없음.
+- **검증**: `tsc`·`eslint`·`build` 0. curl(`/robots.txt`·`/sitemap.xml`·`/` head·`/diagnosis`·`/privacy`·noindex 페이지들·`/opengraph-image` 200 image/png). Playwright(동의 전 배너+스크립트 없음 / 동의 시 GA4+Clarity 라이브 주입 / `/admin` 미주입). standalone 서버는 `.next/static` 미서빙이라 asset 404 — HTML/메타는 정상(로컬 실행 아티팩트).
+- **배포 시**: `.env` 에 `NEXT_PUBLIC_SITE_URL`(실 도메인), `NEXT_PUBLIC_CLARITY_PROJECT_ID`(clarity.microsoft.com 발급) 설정. 미설정이어도 빌드·동작은 정상(각각 폴백/휴면).
+- **범위 밖(의도)**: `/cases` 는 4.2 구현 후 sitemap 추가. `/about` 은 스텁이라 noindex 유지(4.x 에서 구현 시 해제). OG 이미지 한글화는 폰트 번들 시 후속.
 
 ---
 
