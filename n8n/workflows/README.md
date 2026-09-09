@@ -1,8 +1,10 @@
 # n8n 워크플로우
 
-> Phase 2 현재: 실제 워크플로우는 아직 없다. `POST /api/dev/mock-result/[id]`가
-> n8n 대역으로 `diagnosis_results` insert + `diagnoses.status` 전이 + Telegram을
-> 수행한다. Phase B에서 아래 매핑대로 n8n Code 노드가 이를 대체한다.
+> **Phase B (2026-09-09):** `diagnosis-pipeline.json` · `error-trigger.json` 초안 작성됨
+> (n8n 2.x import 용). 셋업·검증·흔한 조정은 **`SETUP.md`**.
+> 개발/미배포 단계에서는 `POST /api/dev/mock-result/[id]`(프로덕션 404)가 계속 n8n 대역을
+> 하고, `N8N_WEBHOOK_URL` 이 설정되면 실제 이 워크플로우가 호출된다.
+> 아래 매핑표는 `diagnosis-pipeline.json` 의 `Validate response` Code 노드가 구현한다.
 
 ## AI 출력 ↔ DB 컬럼 ↔ API 응답 매핑
 

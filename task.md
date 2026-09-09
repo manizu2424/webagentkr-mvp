@@ -42,13 +42,13 @@
     - /diagnosis/[id]: 정적 "분석 중" (폴링은 Phase 2.1~2.2)
     - frontend-design 패스(Task 8, `4299cd3`): 5단계 진행률을 랜딩 히어로 파이프라인 컨셉(다이아몬드 노드 + 헤어라인 커넥터)으로 재설계, `--wak-danger` 토큰 도입해 오류 색상 통일(raw `red-*` 전량 교체), 접근성 버그 2건 수정(Tailwind v4 `outline-none`이 포커스 링 outline-style을 0으로 만드는 문제, `sr-only` 라디오 chip의 키보드 포커스 표시 부재 → `:has(:focus-visible)`로 해결), 탭 타겟 44px 이상 + `motion-reduce:transition-none` 가드
     - 검증: build/lint 통과, 0002 SQL, non-DB curl 3종, 폼 Playwright 흐름. DB 통합 검증은 Supabase 연결 시.
-- [~] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)  — 2.1~2.5 완료·머지 (PR #2, 2026-09-08). **2.6~2.9(실 n8n 워크플로우) 미착수** — n8n 인스턴스 필요(묶음 B 이후 "Phase B")
+- [~] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)  — 2.1~2.5 완료·머지 (PR #2, 2026-09-08). **2.6~2.9 = Phase B: 워크플로우 JSON 초안 작성됨** (`n8n/workflows/*.json` + `SETUP.md`, 2026-09-09) — n8n 인스턴스에서 import + 실행 검증 필요
 - [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D. **묶음 A~D 전부 완료·머지** (2026-09-09). 남은 것은 Phase B(실 n8n)뿐 — 별도 트랙
   - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`). **실 Supabase DB 통합 검증 완료 (2026-09-09, 26/26 pass)** — Phase 2 후속 검증도 함께 통과
   - [x] 묶음 C 법적 고지 — 머지 (PR #4 `a19d28f`, 2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
   - [x] 묶음 B 관리자 화면 — 머지 (PR #7, 2026-09-09). SSR 세션 게이트(`proxy.ts`) + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). SDD 서브에이전트 실행 + opus 최종 리뷰(Critical 1·Important 6 반영). 실 Supabase(리전 서울) B7 검증 13/13.
   - [x] 묶음 D GA4 — 머지 (PR #8 `fe6cdfb`, 2026-09-09). 분석 쿠키 동의 배너(옵트인) + 조건부 gtag.js + `track()` 동의 가드 + 푸터 "쿠키 설정" 철회. 이벤트 호출부 6종은 이미 존재 → 감사만(코드 무변경). 결함 #22 해소. `tsc`·`eslint`·`build` 0, Playwright 8경로. 마이그레이션·DB 무관
-  - [ ] Phase B (`task.md` 2.6~2.9) — 실 n8n 워크플로우. n8n 인스턴스 필요
+  - [~] Phase B (`task.md` 2.6~2.9) — 워크플로우 JSON 초안 커밋됨(`feat/n8n-workflows`). 남은 것: n8n 2.x 에 import + credential 4개 + 실행 검증 (`n8n/workflows/SETUP.md`)
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
 ---
@@ -152,10 +152,10 @@
 - [x] 2.3 FAILED/timeout UX — 사과 문구 + /consultation?diagnosisId=<id> CTA (프리필·lead 재사용은 Phase 3)
 - [x] 2.4 Mock 경로 — POST /api/dev/mock-result/[id] (n8n 대역, 프로덕션 404), lib/mockDiagnosisResult.ts 픽스처
 - [x] 2.5 AI↔DB↔API 매핑표 — n8n/workflows/README.md
-- [ ] 2.6 n8n 워크플로우 구성(기술 스펙 §6): Webhook(secret 검증) → 입력 정리 → OpenAI HTTP Request(Structured Output, 기술 스펙 §7.3 스키마 — strict 요건 충족 확인됨) → 응답 필드 검증 → IF → 성공: `diagnosis_results` insert + status=COMPLETED + Telegram / 실패: status=FAILED + Telegram `[진단 실패]`
-- [ ] 2.7 Error Trigger 워크플로우 → `TELEGRAM_ERROR_CHAT_ID` (기획서 §16.5)
-- [ ] 2.8 워크플로우 JSON export → `n8n/workflows/{diagnosis-pipeline,error-trigger}.json` 커밋
-- [ ] 2.9 필드 단계적 안정화: 우선 핵심 4개(준비도/우선업무/절감시간/요약), 나머지는 P1 가능(기획서 §9.3)
+- [~] 2.6 n8n 워크플로우 구성(기술 스펙 §6) — **`n8n/workflows/diagnosis-pipeline.json` 초안** (`feat/n8n-workflows`, 2026-09-09). Webhook(Header Auth `x-webhook-secret`, `responseMode: onReceived` 즉시 응답) → Code(프롬프트 조립, gpt-4o, §7.3 스키마 strict) → HTTP Request OpenAI(`onError: continueErrorOutput` + retry 3) → Code(6필드 + priorityTasks 3~5 + enum 검증 → DB 컬럼 매핑) → IF → 성공(`diagnosis_results` insert + `diagnoses` COMPLETED + Telegram) / 실패·에러(FAILED + `[진단 실패]` Telegram). **n8n 인스턴스에서 import + 실행 검증 필요** — `n8n/workflows/SETUP.md`
+- [~] 2.7 Error Trigger 워크플로우 → `TELEGRAM_ERROR_CHAT_ID` — **`n8n/workflows/error-trigger.json` 초안**. Error Trigger → Telegram(워크플로우명·노드·에러·실행 URL). n8n Settings 에서 Error Workflow 로 지정
+- [~] 2.8 워크플로우 JSON export → 초안 2개 커밋됨. 인스턴스에서 조정 후 Download 로 덮어써 재커밋
+- [ ] 2.9 필드 단계적 안정화 — 현재 초안은 6필드 전부 강제(strict). 검증 실패율 높으면 핵심 4개로 축소(기획서 §9.3)
 
 ### Phase 2 이탈·메모
 - `POST /api/diagnoses`는 webhook 미설정 시 지금도 그냥 skip(변경 없음). Mock 결과 주입은 별도 dev 라우트가 담당 — 실제 코드 경로에 mock 분기를 넣지 않음(스펙 D-B).
@@ -431,6 +431,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-09: **Phase 4.4 SEO 완료·머지** (PR #9 → `main` `fe6cdfb`→`5cff12b`). `lib/siteMeta.ts` + `app/{sitemap,robots,opengraph-image,icon}` + 페이지별 metadata + 홈 JSON-LD + per-user/스텁/`/admin` noindex + Microsoft Clarity 를 동의 게이트에 배선 + privacy §6·§7·§11 Microsoft 행(초안→4.7). 상세는 "4.4 이탈·메모".
 - 2026-09-09: **Phase 4.6 QA 체크리스트 준비·머지** (PR #10 → `main` `2e45567`). `docs/qa-checklist.md` — §17.2 를 환경 태그·트리거 명령·기대 결과로 상세화. 로컬 사전 검증 13항목 → 11 PASS + B5 FAIL(zod 영문 메시지) + DB 잔여 시드 발견.
 - 2026-09-09: **zod 한글 메시지 수정** (`fix/validation-korean-messages`, 4.6 B5 후속). `lib/validation.ts` `opt()` 에 `SELECT_MSG` 필드별 맵 + `requiredText()` 헬퍼, `phone`/`email` constructor `error`. 진단 14필드 + 상담 스키마 누락·형식오류·enum오류 전부 한글화. Playwright(진단 폼 1단계) + curl 재검증 → B4·B5 PASS. Phase 1 이탈·메모의 미착수 항목 해소. `tsc`·`eslint`·`build` 0.
+- 2026-09-09: **Phase B n8n 워크플로우 초안** (`feat/n8n-workflows`). `n8n/workflows/diagnosis-pipeline.json`(10노드: Webhook→Code→OpenAI HTTP(gpt-4o, §7.3 strict)→Code 검증/매핑→IF→성공/실패 분기) + `error-trigger.json` + `SETUP.md`(credential 4개·env 2개·import·검증·흔한 조정). n8n 2.x 대상, 손으로 작성 — 인스턴스 import 후 조정·검증 남음. Mock(`mock-result`)은 `N8N_WEBHOOK_URL` 설정 전까지 계속 대역.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
