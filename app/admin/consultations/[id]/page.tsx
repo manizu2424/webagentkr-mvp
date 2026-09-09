@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSessionClient } from "@/lib/supabase/session-client";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { StatusSelect } from "@/components/admin/status-select";
+import { MemoEditor } from "@/components/admin/memo-editor";
 
 type Consultation = {
   id: string;
@@ -103,6 +105,10 @@ export default async function ConsultationDetail({
         <Field label="희망 시기" value={c.preferred_date ?? "—"} />
         <Field label="추정 서비스" value={c.suggested_service_type ?? "—"} />
         <Field label="접수일" value={c.created_at.slice(0, 10)} />
+        <div className="flex gap-3 py-1.5 text-[0.88rem]">
+          <span className="w-24 shrink-0 text-ink-soft">상태</span>
+          <StatusSelect consultationId={c.id} current={c.status} />
+        </div>
       </Section>
 
       <Section title="연결 진단">
@@ -122,6 +128,10 @@ export default async function ConsultationDetail({
         ) : (
           <p className="text-[0.88rem] text-ink-soft">연결된 진단 없음</p>
         )}
+      </Section>
+
+      <Section title="메모">
+        <MemoEditor consultationId={c.id} initial={c.memo ?? ""} />
       </Section>
 
       <Link href="/admin" className="mt-2 text-[0.82rem] text-ink-soft hover:text-ink">
