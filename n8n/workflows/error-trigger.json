@@ -1,0 +1,58 @@
+{
+  "name": "WEBAGENT — error trigger",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ERROR_CHAT_ID }}",
+        "text": "=⚠️ n8n 워크플로우 실패\n워크플로우: {{ $json.workflow.name }}\n노드: {{ $json.execution?.lastNodeExecuted }}\n에러: {{ $json.execution?.error?.message }}\n{{ $json.execution?.url }}",
+        "additionalFields": {}
+      },
+      "id": "e-telegram",
+      "name": "Notify error channel",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "WEBAGENT Telegram bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Notify error channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateNote": "기획서 §16.5. n8n Settings > 이 워크플로우를 각 워크플로우의 Error Workflow 로 지정."
+  }
+}
