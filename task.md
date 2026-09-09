@@ -42,13 +42,13 @@
     - /diagnosis/[id]: 정적 "분석 중" (폴링은 Phase 2.1~2.2)
     - frontend-design 패스(Task 8, `4299cd3`): 5단계 진행률을 랜딩 히어로 파이프라인 컨셉(다이아몬드 노드 + 헤어라인 커넥터)으로 재설계, `--wak-danger` 토큰 도입해 오류 색상 통일(raw `red-*` 전량 교체), 접근성 버그 2건 수정(Tailwind v4 `outline-none`이 포커스 링 outline-style을 0으로 만드는 문제, `sr-only` 라디오 chip의 키보드 포커스 표시 부재 → `:has(:focus-visible)`로 해결), 탭 타겟 44px 이상 + `motion-reduce:transition-none` 가드
     - 검증: build/lint 통과, 0002 SQL, non-DB curl 3종, 폼 Playwright 흐름. DB 통합 검증은 Supabase 연결 시.
-- [x] Phase 2 — 3주차: 결과 파이프라인  — 2.1~2.5 머지 (PR #2). **2.6~2.9 = Phase B 완료·검증** (PR #13·#14, 2026-09-09): n8n 2.12.2 + gpt-4o + 실 Supabase 로 진단 제출 → PROCESSING → COMPLETED(11초) 전 구간 통과. Telegram 만 개발 PC IPv6 이슈로 미도달(배포 시 확인)
-- [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D. **묶음 A~D 전부 완료·머지** (2026-09-09). 남은 것은 Phase B(실 n8n)뿐 — 별도 트랙
+- [x] Phase 2 — 3주차: 결과 파이프라인  — 2.1~2.5 머지 (PR #2). **2.6~2.9 = Phase B 완료·검증** (PR #13·#14·#15, 2026-09-09): n8n 2.12.2 + gpt-4o + 실 Supabase 로 진단 제출 → PROCESSING → COMPLETED(~11초) 전 구간 통과. Telegram 만 개발 PC IPv6 이슈로 미도달(배포 시 확인)
+- [x] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 묶음 A~D 전부 완료·머지 (2026-09-09). Phase B(실 n8n)도 완료·검증 (아래).
   - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`). **실 Supabase DB 통합 검증 완료 (2026-09-09, 26/26 pass)** — Phase 2 후속 검증도 함께 통과
   - [x] 묶음 C 법적 고지 — 머지 (PR #4 `a19d28f`, 2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
   - [x] 묶음 B 관리자 화면 — 머지 (PR #7, 2026-09-09). SSR 세션 게이트(`proxy.ts`) + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). SDD 서브에이전트 실행 + opus 최종 리뷰(Critical 1·Important 6 반영). 실 Supabase(리전 서울) B7 검증 13/13.
   - [x] 묶음 D GA4 — 머지 (PR #8 `fe6cdfb`, 2026-09-09). 분석 쿠키 동의 배너(옵트인) + 조건부 gtag.js + `track()` 동의 가드 + 푸터 "쿠키 설정" 철회. 이벤트 호출부 6종은 이미 존재 → 감사만(코드 무변경). 결함 #22 해소. `tsc`·`eslint`·`build` 0, Playwright 8경로. 마이그레이션·DB 무관
-  - [x] Phase B (`task.md` 2.6~2.9) — n8n 워크플로우 완료·로컬 검증 (PR #13·#14). `diagnosis-pipeline.json` + `error-trigger.json` + `SETUP.md`. 실 배포 검증(Telegram 도달)은 4.5 에서
+  - [x] Phase B (`task.md` 2.6~2.9) — n8n 워크플로우 완료·로컬 검증 (PR #13·#14·#15). `diagnosis-pipeline.json` + `error-trigger.json` + `SETUP.md`. 로컬에서 진단 제출→COMPLETED 관통 확인. 실 배포 검증(Telegram 도달)은 4.5 에서
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
 ---
