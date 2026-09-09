@@ -43,11 +43,11 @@
     - frontend-design 패스(Task 8, `4299cd3`): 5단계 진행률을 랜딩 히어로 파이프라인 컨셉(다이아몬드 노드 + 헤어라인 커넥터)으로 재설계, `--wak-danger` 토큰 도입해 오류 색상 통일(raw `red-*` 전량 교체), 접근성 버그 2건 수정(Tailwind v4 `outline-none`이 포커스 링 outline-style을 0으로 만드는 문제, `sr-only` 라디오 chip의 키보드 포커스 표시 부재 → `:has(:focus-visible)`로 해결), 탭 타겟 44px 이상 + `motion-reduce:transition-none` 가드
     - 검증: build/lint 통과, 0002 SQL, non-DB curl 3종, 폼 Playwright 흐름. DB 통합 검증은 Supabase 연결 시.
 - [~] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)  — 2.1~2.5 완료·머지 (PR #2, 2026-09-08). **2.6~2.9(실 n8n 워크플로우) 미착수** — n8n 인스턴스 필요(묶음 B 이후 "Phase B")
-- [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D. **묶음 A~D 전부 완료** (2026-09-09). 남은 것은 Phase B(실 n8n)뿐 — 별도 트랙
-  - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`, 2026-09-08). DB 통합 검증만 Supabase 연결 시 대기
-  - [x] 묶음 C 법적 고지 — 브랜치 `feat/legal-pages` (2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
-  - [x] 묶음 B 관리자 화면 — 브랜치 `feat/admin-console` (2026-09-09). SSR 세션 게이트(`proxy.ts`) + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). SDD 서브에이전트 실행 + opus 최종 리뷰(Critical 1·Important 6 반영). 실 Supabase(리전 서울) B7 검증 13/13. **PR 대기(직접 머지)**
-  - [x] 묶음 D GA4 — 브랜치 `feat/ga4` (2026-09-09). 분석 쿠키 동의 배너(옵트인) + 조건부 gtag.js + `track()` 동의 가드 + 푸터 "쿠키 설정" 철회. 이벤트 호출부 6종은 이미 존재 → 감사만(코드 무변경). 결함 #22 해소. `tsc`·`eslint`·`build` 0, Playwright 8경로. 마이그레이션·DB 무관
+- [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D. **묶음 A~D 전부 완료·머지** (2026-09-09). 남은 것은 Phase B(실 n8n)뿐 — 별도 트랙
+  - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`). **실 Supabase DB 통합 검증 완료 (2026-09-09, 26/26 pass)** — Phase 2 후속 검증도 함께 통과
+  - [x] 묶음 C 법적 고지 — 머지 (PR #4 `a19d28f`, 2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
+  - [x] 묶음 B 관리자 화면 — 머지 (PR #7, 2026-09-09). SSR 세션 게이트(`proxy.ts`) + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). SDD 서브에이전트 실행 + opus 최종 리뷰(Critical 1·Important 6 반영). 실 Supabase(리전 서울) B7 검증 13/13.
+  - [x] 묶음 D GA4 — 머지 (PR #8 `fe6cdfb`, 2026-09-09). 분석 쿠키 동의 배너(옵트인) + 조건부 gtag.js + `track()` 동의 가드 + 푸터 "쿠키 설정" 철회. 이벤트 호출부 6종은 이미 존재 → 감사만(코드 무변경). 결함 #22 해소. `tsc`·`eslint`·`build` 0, Playwright 8경로. 마이그레이션·DB 무관
   - [ ] Phase B (`task.md` 2.6~2.9) — 실 n8n 워크플로우. n8n 인스턴스 필요
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
@@ -103,10 +103,16 @@
 
 ### Phase 0 이후 사용자 직접 작업 (코드 불가)
 1. Supabase 프로젝트 생성(**리전: Seoul 권장** — 결함 #15) → 마이그레이션 SQL 을 대시보드 > SQL Editor 에 붙여넣어 순서대로 1회씩 실행. 실행 후 각 파일에 `[x]` 표시:
-   - [ ] `supabase/migrations/0001_init.sql`
-   - [ ] `supabase/migrations/0002_diagnoses_idempotency.sql` (0001 이후). 이 컬럼(`diagnoses.idempotency_key`)이 없으면 배포 후 **모든** 진단 제출이 500 으로 실패하고 PII 만 담긴 고아 `leads` 행이 쌓인다. 파일 헤더의 "적용 확인" 쿼리로 컬럼 존재를 검증할 것. (Phase 2 배포 체크리스트에도 재확인)
-2. Supabase Auth **Email 가입 + 익명 로그인 모두 비활성화**, 관리자 계정 1개 수동 생성(+2FA 권장)
-3. Telegram 봇 생성(BotFather) → 토큰/chat id
+   - [x] `supabase/migrations/0001_init.sql` (2026-09-09 적용 확인 — 5테이블+RLS)
+   - [x] `supabase/migrations/0002_diagnoses_idempotency.sql` (2026-09-09 적용 확인 — `diagnoses.idempotency_key` 존재). ~~없으면 모든 진단 제출 500~~
+   - [x] 프로젝트 리전 = **Northeast Asia (Seoul) / `ap-northeast-2`** (2026-09-09 확인, 기획서 §15.2 권장대로).
+     데이터가 서울에 저장됨 → privacy 국외이전 표 Supabase 행: 국가 = 대한민국, 단 수탁자(Supabase Inc.) 본사는 미국 →
+     "국외 이전 해당 여부"는 변호사 검토 사항(Phase 4.7). `[리전 확정 필요]` placeholder 는 "대한민국(서울)" 로 교체 가능.
+2. Supabase Auth 비활성화 — **완료·검증 (2026-09-09)** = 묶음 B의 B1:
+   - [x] 익명 로그인 비활성화 (`anonymous_provider_disabled`)
+   - [x] 이메일 회원가입 비활성화 (`signup_disabled` — `POST /auth/v1/signup` 이 이메일·익명 모두 422 거부)
+   - [x] 관리자 계정 1개만 존재 (`manizu2424@gmail.com`). probe 유저 삭제 확인. (+2FA 후순위)
+3. Telegram 봇 생성(BotFather) → 토큰/chat id — [x] `@webagentkrbot` + ADMIN chat id, `.env` 반영 (2026-09-09 확인)
 4. OpenAI API 키 발급
 5. `.env.example` → `.env` 채우기, `n8n.env` 별도 작성
 6. (배포) Contabo VPS `docker compose up`, Nginx Proxy Manager에서 도메인·인증서, **방화벽 80/443만 개방**
@@ -168,7 +174,7 @@
   - `lib/diagnosisResult.ts`·`lib/mockDiagnosisResult.ts` 에 `server-only` 미부착 — 계획 Global Constraints 의 "러너 없는 유닛 테스트 대상" 결정 유지. 현재 모든 클라이언트 import 가 `import type` 이라 런타임 누출 없음. 값 import 방지 가드는 post-MVP 검토.
   - `let timer` hoist / effect 시작 시 `setView({kind:"polling"})` — 둘 다 eslint(`prefer-const`, `react-hooks/set-state-in-effect`) 위반. 기존 `const timer` 클로저 + `onRetry` 가 polling 세팅하는 패턴이 정답이라 원복.
   - 폴링→결과 전환 `aria-live` — 카드 6개를 통째로 읽어 SR 장황해지는 역효과. 짧은 상태 알림은 Phase 3 a11y 패스에서.
-- **머지 후 필수 후속**: Supabase 연결 환경에서 `제출 → /diagnosis/[id] → curl POST /api/dev/mock-result/<id> → 6카드` / `?outcome=failed → FailedNotice` / `?_test_maxAttempts=2 → timeout` 3경로 실측. 이 계약 위에 Phase B(n8n)·Phase 3(상담)이 쌓임.
+- ~~**머지 후 필수 후속**: Supabase 연결 환경에서 3경로 실측~~ → **2026-09-09 완료** (아래 "실 DB 검증" 참고).
 - **배포 판단**: 이 브랜치만 프로덕션에 올라가면 `N8N_WEBHOOK_URL` 미설정 + `mock-result` 프로덕션 404 → 모든 진단이 3분 timeout(상담 CTA)로 종결. Mock-우선 설계상 예상 동작이나, Phase B 완료 전까지 프로덕션에서 "완료된 진단 결과"를 기대하면 안 됨.
 
 ---
@@ -210,6 +216,21 @@
 - DB 통합(제출→`consultations` 행 + Telegram, `diagnosis_not_found`, 성공 화면)은 이 환경에 Supabase 없어 미검증 — curl 에러 경로 + Playwright 렌더로 대체. 묶음 B 착수 전 1회 관통 권장.
 - serviceTagging ④ n8n Automation 판정에 "LLM 마커 없음" 조건 추가(스펙 §3.2 해석) — Mock 픽스처 스택이 항상 n8n 을 포함해 기본값이 죽는 문제 회피.
 
+### 묶음 A + Phase 2 — 실 DB 검증 (2026-09-09)
+
+사용자가 Supabase 프로젝트 생성(리전 = **서울 `ap-northeast-2`**) + `0001`·`0002` SQL 실행 + `.env`(Supabase 3키 + Telegram 3키, `N8N_WEBHOOK_URL` 공란) 완료. `npm run dev` 로 실 DB·실 Telegram 상대 검증. **26/26 pass.**
+
+- **셋업 사전확인**: 5테이블 존재 · `diagnoses.idempotency_key` 존재(0002) · anon 키로 `leads` 읽기 차단(RLS 정책 없음) · service-role 유효 · Telegram 봇 `@webagentkrbot` + `TELEGRAM_ADMIN_CHAT_ID` 유효(테스트 메시지 도달).
+- **셋업 함정**: `NEXT_PUBLIC_SUPABASE_URL` 에 처음 `.../rest/v1/` 가 붙어 모든 DB 호출이 `PGRST125` (경로 이중). Settings > API 의 **Project URL**(`https://<ref>.supabase.co`) 만 넣어야 함 — `.env.example` 에 주석 추가.
+- **Phase 2**: `POST /api/diagnoses` → `PROCESSING`(webhook skip) → `POST /api/dev/mock-result/<id>` → `GET` `COMPLETED` + result 6필드 + `diagnosis_results` 1행 / `?outcome=failed` → `FAILED` + 결과행 0 / 없는 uuid → `GET` 404 / 같은 `idempotencyKey` 재제출 → 같은 `diagnosisId` + `leads` 1행. 결과 페이지: 6카드·`FailedNotice`·`?_test_maxAttempts=2` timeout·notfound 뷰 전부 Playwright 렌더 확인.
+- **묶음 A**: `diagnosisId` 경로 → `consultations.lead_id == diagnoses.lead_id`(재사용), `status=NEW`, `suggested_service_type` 5종 CHECK 통과(픽스처+`websiteStatus=없음` → `Smart Website`) / 없는 uuid → 404 `diagnosis_not_found` / FAILED 진단(결과행 없음) → insert OK, 태그 `null` / 직접 경로 email upsert → 재제출 시 `leads` 1행 유지·마지막 쓰기 승·상담 2건 / 동의 누락 → 400 / 허니팟 → 200 무저장 / rate limit 6회째 429(스크립트 연속 호출로 확인, dev 재시작 시 Map 초기화도 확인). 폼 성공 화면 2 variant(프리필·직접) Playwright 확인.
+- **Telegram (dev 머신에서 검증 불가)**: 사용자 텔레그램에는 `curl` 테스트 메시지만 도착, 앱이 보낸 `[신규 상담]`·`[진단 실패]` 는 **미도착**.
+  원인 = 이 dev 머신의 **IPv6 라우팅 문제** — Node `fetch`(= `sendTelegram`)가 IPv6 주소 시도 후 IPv4 폴백 실패(`ETIMEDOUT`), `curl`/Node core `https` `family:4` 는 성공.
+  봇 토큰·chat id·메시지 형식은 `curl` 실전송으로 확인됨. **Contabo VPS(정상 네트워크)에서는 동작.** 문구·PII 경계는 그때 육안 확인.
+  → 부수 결함: `sendTelegram` 이 fetch throw 를 로그 없이 삼켜 실패가 안 보임 → **PR #6 (`fix/telegram-error-logging`)** 로 catch+`console.error` 추가.
+- **정리**: 검증 중 생성한 모든 DB 행 삭제(`*@verify.test` 기준) — 5테이블 전부 0행 복귀. 프로덕션/실사용 데이터 아님. (auth probe 유저는 삭제 권한 막혀 사용자 몫 — 위 "Phase 0 이후" 2번 참고)
+- 스크립트: `scratchpad/{check-supabase,verify,inspect,cleanup,auth-check}.mjs` 등 (일회성, 리포 밖).
+
 ### 묶음 C — 법적 고지  (A 다음)
 
 - [x] **C1 개인정보처리방침** `app/(marketing)/privacy/page.tsx` (구 3.5 · 결함 #15) — 13절 초안 + 국외 이전 표
@@ -232,8 +253,8 @@
 
 ### 묶음 B — 관리자 화면  (C 다음 · 별도 API 없음, RLS 직접 조회 §4.4)
 
-- [x] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** 확인,
-      관리자 계정 1개 수동 생성(+2FA). 코드 불가. (검증용 `verify-admin@webagent.test` 는 `scratchpad/` 스크립트로 생성)
+- [x] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** + 관리자 계정 1개
+      (`manizu2424@gmail.com`). 2026-09-09 API 검증 완료(`signup_disabled` / `anonymous_provider_disabled`, 유저 1). 코드 불가. (검증용 `verify-admin@webagent.test` 는 `scratchpad/` 스크립트로 생성 후 삭제)
 - [x] **B2 `app/admin/layout.tsx` 세션 게이트** — 서버 세션 확인 → 미인증 시 `/admin/login` 리다이렉트. `proxy.ts`(신규) 1차 게이트 + 레이아웃 재확인.
 - [x] **B3 로그인** `app/admin/login/page.tsx` — Supabase Auth 이메일/비번(`lib/supabase/client.ts`).
 - [x] **B4 대시보드** `app/admin/page.tsx` — YAGNI 로 별도 대시보드 미구현. `/admin` = 상담 목록 홈(사용자 확정, 이탈·메모).
@@ -316,7 +337,8 @@
 - [ ] 4.7 법적 페이지 `[확정 필요]` 채우기 (묶음 C 초안 → 실값) + **변호사·노무사 검토** — 출시 전 필수:
   - 사업자 정보: 상호 · 대표자 · 사업자등록번호 · 통신판매업신고번호 · 주소 · 이메일 (`site-footer.tsx` + privacy §12/§13)
   - 개인정보 보호책임자(성명·직책·이메일), 보유기간(진단·상담 / 자동 생성 정보)
-  - **Supabase 리전 확정** → privacy 국외이전 표 `[리전 확정 필요]` 반영 (리전 자체는 기획서 §15.2 "Seoul 권장")
+  - **Supabase 리전** = 서울 `ap-northeast-2` 확정(2026-09-09) → privacy 국외이전 표 `[리전 확정 필요]` 를 "대한민국(서울)" 로 교체 +
+    데이터는 국내 저장·수탁자 본사는 미국 → "국외 이전 해당 여부" 자체를 변호사가 판단(표에 남길지/위탁 표로 옮길지)
   - 시행일: 개인정보처리방침 · 이용약관 / 이용약관 관할 법원
 
 ---
@@ -350,7 +372,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 | #2 프록시 IP | 0.5 (`clientIp.ts`), 1.5, 4.6 |
 | #3 웹훅 실패 | 1.5 (라운드 2 반영) |
 | #4 포트 노출 | 0.6 |
-| #5 익명 로그인 | 0.3 주석 + 사용자 작업 2 |
+| #5 익명 로그인 | 0.3 주석 + B1 (2026-09-09 검증: 익명·이메일 가입 모두 비활성 확인) |
 | #6·#7 누락 필드 | D1 → 0.0/0.3 |
 | #8 태깅 위치 | D3 → 3.3 |
 | #9 필드 매핑 | 0.3(difficulty), 2.5 |
@@ -387,9 +409,10 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-08: **Phase 2 완료·머지** (PR #2 → `main` `2d02c45`). 결과 파이프라인 Mock 우선 — 매핑 함수/픽스처, `GET /api/diagnoses/[id]`, `POST /api/dev/mock-result/[id]`, 폴링 아일랜드 + 6카드, frontend-design 패스. 최종 리뷰 Critical 0 → fix wave(`463f2fe`, 폴 겹침 방지·404 문구 분리·remount 가드) → 범위 재리뷰 clean. 실 DB 해피패스는 Supabase 연결 시 실측(미실행).
 - 2026-09-08: **Phase 3 를 4묶음으로 분해.** A(상담 흐름) / C(법적 고지) / B(관리자) / D(GA4), 착수 순서 A→C→B→D. 각 묶음 자체 spec→plan→구현. A 부터 착수(브랜치 `feat/consultation-flow`), 상세는 위 Phase 3 섹션.
 - 2026-09-08: **묶음 A(상담 흐름) 완료·머지** (PR #3 → `main` `21130a9`). `lib/serviceTagging.ts`, `POST /api/consultations`, 상담 폼(`?diagnosisId=` 프리필/직접 입력 2경로), 결과 페이지 상담 CTA. 최종 리뷰 opus Critical 0(I-1 클라이언트 검증·I-2 DB 조회 가드 반영). DB 통합 검증은 Supabase 연결 시(PR #3 본문 체크리스트).
-- 2026-09-09: **묶음 C(법적 고지) 완료** (브랜치 `feat/legal-pages`). 개인정보처리방침(13절 + 국외이전·위탁 표) + 이용약관(10조 + 부칙) 초안, 공용 셸 `components/marketing/legal/`, 푸터 사업자 정보 라인, 진단 step5·상담 폼 "동의 간주" 문구 + 링크. 전부 `[확정 필요]` 플레이스홀더(전문가 검토는 사용자 몫 → Phase 4.7). 결함 #15 해소. `tsc`·`eslint`·`build` 0, Playwright 렌더 확인. DB·마이그레이션·env 무관.
-- 2026-09-09: **묶음 B(관리자 화면) 완료** (브랜치 `feat/admin-console`, base `a19d28f` → head `f57b5df`). SSR 인증 게이트(`proxy.ts` + `lib/supabase/session-client.ts`) + 로그인 + 상담 목록/상세(상태 전이·메모 server action) + 진단 상세(읽기 전용). 전용 API 없이 RLS `authenticated` 직접 조회. SDD 서브에이전트 실행(7 태스크, 각 구현+리뷰) + opus 최종 전체 리뷰 → Critical 1(문서 내 검증계정 평문 비번 — 계정 삭제·redact) + Important 6(server action 인가 가드·0행 저장 실패·layout 방어 표현·KST 날짜·에러 바운더리·`toApiResult` 재사용) 반영, 스코프 재리뷰 clean. 실 Supabase(리전 서울) B7 검증 13/13. 마이그레이션·env·스키마 무변경. 상세는 "묶음 B 최종 전체 브랜치 리뷰".
-- 2026-09-09: **묶음 D(GA4) 완료** (브랜치 `feat/ga4`). bounded 경로(spec/plan 문서 없음, 채팅 설계안 승인 후 구현). `lib/consent.ts`(localStorage + 커스텀 이벤트) + `components/analytics/{analytics-consent,cookie-settings-link}.tsx` + `lib/analytics.ts` `track()` 동의 가드 + 루트 레이아웃 마운트 + 푸터 링크. 옵트인(개인정보처리방침 §11 계약), 동의 전 gtag 완전 미주입, `/admin`·env 미설정 제외, 철회는 `ga-disable` 플래그로 리로드 없이. D3 이벤트 감사 결과 6종 전부 §9 위치 일치 → 호출부 코드 무변경. `tsc`·`eslint`·`build` 0, Playwright 8경로 통과. 결함 #22 해소. 마이그레이션·DB 무관. Clarity 는 Phase 4.4 유지. 상세는 "묶음 D 이탈·메모".
+- 2026-09-09: **묶음 C(법적 고지) 완료·머지** (PR #4 → `main` `a19d28f`). 개인정보처리방침(13절 + 국외이전·위탁 표) + 이용약관(10조 + 부칙) 초안, 공용 셸 `components/marketing/legal/`, 푸터 사업자 정보 라인, 진단 step5·상담 폼 "동의 간주" 문구 + 링크. 전부 `[확정 필요]` 플레이스홀더(전문가 검토는 사용자 몫 → Phase 4.7). 결함 #15 해소. `tsc`·`eslint`·`build` 0, Playwright 렌더 확인. DB·마이그레이션·env 무관.
+- 2026-09-09: **묶음 A + Phase 2 실 DB 검증 완료.** 사용자가 Supabase 프로젝트 + `0001`·`0002` + `.env`(Supabase/Telegram) 세팅. `npm run dev` 로 실 DB·실 Telegram 상대 검증 **26/26 pass** (Phase 2 결과 파이프라인 4뷰 + 멱등성, 묶음 A 7체크 + 동의/허니팟/rate limit). 상세는 위 "묶음 A + Phase 2 — 실 DB 검증". Telegram 문구·PII 경계 최종 육안 확인은 사용자 몫. 검증 데이터 정리 완료(전 테이블 0행). `.env.example` 에 `NEXT_PUBLIC_SUPABASE_URL` 주석 추가.
+- 2026-09-09: **묶음 B(관리자 화면) 완료·머지** (PR #7 → `main`, base `a19d28f` → head `f57b5df`). SSR 인증 게이트(`proxy.ts` + `lib/supabase/session-client.ts`) + 로그인 + 상담 목록/상세(상태 전이·메모 server action) + 진단 상세(읽기 전용). 전용 API 없이 RLS `authenticated` 직접 조회. SDD 서브에이전트 실행(7 태스크, 각 구현+리뷰) + opus 최종 전체 리뷰 → Critical 1(문서 내 검증계정 평문 비번 — 계정 삭제·redact) + Important 6(server action 인가 가드·0행 저장 실패·layout 방어 표현·KST 날짜·에러 바운더리·`toApiResult` 재사용) 반영, 스코프 재리뷰 clean. 실 Supabase(리전 서울) B7 검증 13/13. 마이그레이션·env·스키마 무변경. 상세는 "묶음 B 최종 전체 브랜치 리뷰".
+- 2026-09-09: **묶음 D(GA4) 완료·머지** (PR #8 → `main` `fe6cdfb`). bounded 경로(spec/plan 문서 없음, 채팅 설계안 승인 후 구현). `lib/consent.ts`(localStorage + 커스텀 이벤트) + `components/analytics/{analytics-consent,cookie-settings-link}.tsx` + `lib/analytics.ts` `track()` 동의 가드 + 루트 레이아웃 마운트 + 푸터 링크. 옵트인(개인정보처리방침 §11 계약), 동의 전 gtag 완전 미주입, `/admin`·env 미설정 제외, 철회는 `ga-disable` 플래그로 리로드 없이. D3 이벤트 감사 결과 6종 전부 §9 위치 일치 → 호출부 코드 무변경. `tsc`·`eslint`·`build` 0, Playwright 8경로 통과. 결함 #22 해소. 마이그레이션·DB 무관. Clarity 는 Phase 4.4 유지. 상세는 "묶음 D 이탈·메모".
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
