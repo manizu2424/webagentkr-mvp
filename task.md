@@ -108,12 +108,10 @@
    - [x] 프로젝트 리전 = **Northeast Asia (Seoul) / `ap-northeast-2`** (2026-09-09 확인, 기획서 §15.2 권장대로).
      데이터가 서울에 저장됨 → privacy 국외이전 표 Supabase 행: 국가 = 대한민국, 단 수탁자(Supabase Inc.) 본사는 미국 →
      "국외 이전 해당 여부"는 변호사 검토 사항(Phase 4.7). `[리전 확정 필요]` placeholder 는 "대한민국(서울)" 로 교체 가능.
-2. Supabase Auth 비활성화 — **부분 완료 (2026-09-09 검증)**:
-   - [x] 익명 로그인 비활성화 확인 (`anonymous_provider_disabled`)
-   - [ ] **이메일 회원가입 비활성화 — 아직 켜져 있음** (검증 중 `POST /auth/v1/signup` 200, probe 유저 생성됨).
-     `Authentication → Sign In / Providers → "Allow new users to sign up"` OFF 필요. 결함 #5 상, 필수.
-   - [x] 관리자 계정 1개 존재 (`manizu2424@gmail.com`). (+2FA 권장 — 최소 admin UI 는 MFA 미구현, 후순위)
-   - ⚠️ 검증 중 생성된 probe auth 유저(`probe.*@gmail.com`) 1건 — 대시보드 `Authentication → Users` 에서 삭제 필요
+2. Supabase Auth 비활성화 — **완료·검증 (2026-09-09)** = 묶음 B의 B1:
+   - [x] 익명 로그인 비활성화 (`anonymous_provider_disabled`)
+   - [x] 이메일 회원가입 비활성화 (`signup_disabled` — `POST /auth/v1/signup` 이 이메일·익명 모두 422 거부)
+   - [x] 관리자 계정 1개만 존재 (`manizu2424@gmail.com`). probe 유저 삭제 확인. (+2FA 후순위)
 3. Telegram 봇 생성(BotFather) → 토큰/chat id — [x] `@webagentkrbot` + ADMIN chat id, `.env` 반영 (2026-09-09 확인)
 4. OpenAI API 키 발급
 5. `.env.example` → `.env` 채우기, `n8n.env` 별도 작성
@@ -255,8 +253,8 @@
 
 ### 묶음 B — 관리자 화면  (C 다음 · 별도 API 없음, RLS 직접 조회 §4.4)
 
-- [x] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** 확인,
-      관리자 계정 1개 수동 생성(+2FA). 코드 불가. (검증용 `verify-admin@webagent.test` 는 `scratchpad/` 스크립트로 생성)
+- [x] **B1 사전 조건(사용자 작업)** — Supabase Auth 이메일 가입 + 익명 로그인 **둘 다 비활성화** + 관리자 계정 1개
+      (`manizu2424@gmail.com`). 2026-09-09 API 검증 완료(`signup_disabled` / `anonymous_provider_disabled`, 유저 1). 코드 불가. (검증용 `verify-admin@webagent.test` 는 `scratchpad/` 스크립트로 생성 후 삭제)
 - [x] **B2 `app/admin/layout.tsx` 세션 게이트** — 서버 세션 확인 → 미인증 시 `/admin/login` 리다이렉트. `proxy.ts`(신규) 1차 게이트 + 레이아웃 재확인.
 - [x] **B3 로그인** `app/admin/login/page.tsx` — Supabase Auth 이메일/비번(`lib/supabase/client.ts`).
 - [x] **B4 대시보드** `app/admin/page.tsx` — YAGNI 로 별도 대시보드 미구현. `/admin` = 상담 목록 홈(사용자 확정, 이탈·메모).
@@ -374,7 +372,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 | #2 프록시 IP | 0.5 (`clientIp.ts`), 1.5, 4.6 |
 | #3 웹훅 실패 | 1.5 (라운드 2 반영) |
 | #4 포트 노출 | 0.6 |
-| #5 익명 로그인 | 0.3 주석 + 사용자 작업 2 |
+| #5 익명 로그인 | 0.3 주석 + B1 (2026-09-09 검증: 익명·이메일 가입 모두 비활성 확인) |
 | #6·#7 누락 필드 | D1 → 0.0/0.3 |
 | #8 태깅 위치 | D3 → 3.3 |
 | #9 필드 매핑 | 0.3(difficulty), 2.5 |
