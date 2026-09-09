@@ -46,8 +46,9 @@
 - [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D
   - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`, 2026-09-08). DB 통합 검증만 Supabase 연결 시 대기
   - [x] 묶음 C 법적 고지 — 브랜치 `feat/legal-pages` (2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
-  - [x] 묶음 B 관리자 화면 — 브랜치 `feat/admin-console` (2026-09-09). SSR 세션 게이트 + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). DB 통합 검증만 Supabase 연결 시
+  - [x] 묶음 B 관리자 화면 — 브랜치 `feat/admin-console` (2026-09-09). SSR 세션 게이트(`proxy.ts`) + 로그인 + 상담 목록/상세/상태전이/메모 + 진단 상세. 별도 API 없음(RLS `authenticated` 직접 조회). SDD 서브에이전트 실행 + opus 최종 리뷰(Critical 1·Important 6 반영). 실 Supabase(리전 서울) B7 검증 13/13. **PR 대기(직접 머지)**
   - [ ] 묶음 D GA4 — 마지막
+  - [ ] Phase B (`task.md` 2.6~2.9) — 실 n8n 워크플로우. n8n 인스턴스 필요
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
 ---
@@ -250,8 +251,26 @@
 - `/admin` = 상담 목록 홈. 별도 대시보드·독립 진단 목록 없음(YAGNI, 사용자 확정). 진단은 상담 상세에서 링크로만.
 - 상태 전이 = `<select>` 7값 자유 전이(가드 없음). 상태 변경 즉시 저장, 메모는 버튼 저장. server action 반환 `{ok:true}|{error}`.
 - 마이그레이션·env 없음. `consultations.memo`·RLS 정책은 0001에 이미 존재.
-- 검증: build/lint/tsc 0, Playwright(로그인·목록·필터·상세·상태·메모·404·리다이렉트), Supabase REST 단언(service-role). 검증용 관리자(`verify-admin@webagent.test`) + 시드 상담/진단은 `scratchpad/` 스크립트로 생성 후 **삭제**. (auth 유저 삭제가 권한상 막히면 사용자가 대시보드에서 제거)
+- 검증: build/lint/tsc 0, Playwright(로그인·목록·필터·상세·상태·메모·404·리다이렉트), Supabase REST 단언(service-role). 검증용 관리자(`verify-admin@webagent.test`) + 시드 상담/진단은 `scratchpad/` 스크립트로 생성 후 삭제. **verify-admin auth 유저는 사용자가 대시보드에서 삭제 완료(2026-09-09).**
 - frontend-design 패스 없음(내부 도구, `--wak-*` 토큰만).
+
+### 묶음 B 최종 전체 브랜치 리뷰 (SDD, base `a19d28f` → head `f57b5df`, 2026-09-09)
+
+서브에이전트 방식 실행(태스크별 구현+리뷰 7회, 정오표/픽스 커밋 포함) → 최종 전체 리뷰(opus).
+
+- **최종 리뷰 결과: Critical 1 + Important 6.** 인증 아키텍처(proxy 쿠키 전파·3-클라이언트 분리·RLS 의존 읽기 경로 — 미인증 유출/서비스롤 누출 없음)는 견고 판정. 전부 fix wave 커밋 4개(`46d8b6b`·`b3c3c43`·`fe03fd2`·`f57b5df`)로 반영, 스코프 재리뷰 clean.
+  - **C-1** 커밋된 plan 문서에 검증 계정 평문 비번 → 문서 redact. 사용자가 `verify-admin@webagent.test` 계정 삭제(무효화 완료). 미push 브랜치라 히스토리 재작성은 생략(무효 시크릿).
+  - **I-1** server action(`actions.ts`)에 자체 `getUser()` 가드 추가 — Next 16 `proxy.md`가 "Server Function은 proxy 체인 밖, 각자 인가 확인"을 명시. 세션 없으면 `{error:"세션이 만료…"}`.
+  - **I-2** 0행 `.update()`가 `{ok:true}` 반환하던 것 → `.select("id").maybeSingle()` 후 `!data` 시 `{error:"저장 대상을 찾지 못했습니다."}`.
+  - **I-3** `layout.tsx` 세션 분기가 "방어"라던 주석·스펙(§3.3·B-b) → "셸 분기용, 실 방어는 RLS + action 가드"로 정정. 동작 불변.
+  - **I-4** `lib/kst.ts` 신규 — `created_at.slice(0,10)`·`todayStartIso()`가 UTC 날짜라 독일 VPS에서 KST 0~9시 접수분이 전날로 표시되던 것을 KST 기준으로 교정(목록·상세·요약 줄).
+  - **I-5** `status-select`/`memo-editor`의 action 호출을 try/catch로 감싸고 `app/admin/error.tsx`(에러 바운더리) 신규 — 세션 만료 중 저장 시 전체 페이지 크래시(메모 유실) 방지. 로그인/로그아웃 `signInWithPassword`/`signOut`도 try/catch(+`finally`).
+  - **I-6** `diagnoses/[id]` 결과 매핑을 `lib/diagnosisResult.ts`의 `toApiResult`(가드 내장) 재사용으로 교체 — 로컬 `as unknown as` 낙관 캐스팅 제거, AI↔DB↔API 계약 단일 소스. 2번째 쿼리 `error` vs null 도 구분.
+  - **§6** 비-uuid id(`/admin/consultations/abc`)가 일반 오류 화면으로 빠지던 것 → `z.uuid().safeParse` 후 `notFound()`.
+- **의도적으로 deferred 유지(머지 차단 아님, post-MVP)**: `Object.hasOwn` 필터 가드, "저장됨" 메시지 자동 소멸, `revalidatePath` 원본 id, `Field`/`Section` 헬퍼 2중 정의, `text-white` 토큰(마케팅·상담 버튼 관행), 목록 `.limit()` 상한, RSC 조회 오류 `console.error` parity, 뱃지-only 링크 a11y, 로그인 오류 `role="alert"`.
+- **판정 이탈(SDD ruling)**: `PageProps<>`/`LayoutProps<>` 전역 타입 대신 인라인 prop 타입 사용 — plan Global Constraint가 금지했으나 리포의 다른 라우트는 생성 타입을 씀. tsc-clean이라 머지 차단 아님, post-MVP 정합. `middleware.ts`→`proxy.ts`는 Next 16 강제(정오표로 문서화).
+- **DB 통합 검증은 실 Supabase(리전 서울)로 수행함** — B7 체크리스트 13/13 통과(미인증 리다이렉트, 로그인 실패/성공, anon RLS 차단, 필터 4종, 상세 2경로, 404, 상태 전이 DB 반영, 메모 저장/프리필, 진단 상세 COMPLETED/FAILED, 실 브라우저 로그아웃 재게이트). 검증 데이터 전량 삭제·시드 원상복구.
+- **머지 후 후속**: 없음(이 묶음은 스키마·env 무변경). CLAUDE.md 결함 #5(익명 로그인=`authenticated`)가 이 콘솔의 유일한 인가 전제이므로, Supabase Auth 설정을 배포 전 자동 확인 스크립트로 승격 권장(Phase 4).
 
 ### 묶음 D — GA4  (마지막)
 
@@ -358,6 +377,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-08: **Phase 3 를 4묶음으로 분해.** A(상담 흐름) / C(법적 고지) / B(관리자) / D(GA4), 착수 순서 A→C→B→D. 각 묶음 자체 spec→plan→구현. A 부터 착수(브랜치 `feat/consultation-flow`), 상세는 위 Phase 3 섹션.
 - 2026-09-08: **묶음 A(상담 흐름) 완료·머지** (PR #3 → `main` `21130a9`). `lib/serviceTagging.ts`, `POST /api/consultations`, 상담 폼(`?diagnosisId=` 프리필/직접 입력 2경로), 결과 페이지 상담 CTA. 최종 리뷰 opus Critical 0(I-1 클라이언트 검증·I-2 DB 조회 가드 반영). DB 통합 검증은 Supabase 연결 시(PR #3 본문 체크리스트).
 - 2026-09-09: **묶음 C(법적 고지) 완료** (브랜치 `feat/legal-pages`). 개인정보처리방침(13절 + 국외이전·위탁 표) + 이용약관(10조 + 부칙) 초안, 공용 셸 `components/marketing/legal/`, 푸터 사업자 정보 라인, 진단 step5·상담 폼 "동의 간주" 문구 + 링크. 전부 `[확정 필요]` 플레이스홀더(전문가 검토는 사용자 몫 → Phase 4.7). 결함 #15 해소. `tsc`·`eslint`·`build` 0, Playwright 렌더 확인. DB·마이그레이션·env 무관.
+- 2026-09-09: **묶음 B(관리자 화면) 완료** (브랜치 `feat/admin-console`, base `a19d28f` → head `f57b5df`). SSR 인증 게이트(`proxy.ts` + `lib/supabase/session-client.ts`) + 로그인 + 상담 목록/상세(상태 전이·메모 server action) + 진단 상세(읽기 전용). 전용 API 없이 RLS `authenticated` 직접 조회. SDD 서브에이전트 실행(7 태스크, 각 구현+리뷰) + opus 최종 전체 리뷰 → Critical 1(문서 내 검증계정 평문 비번 — 계정 삭제·redact) + Important 6(server action 인가 가드·0행 저장 실패·layout 방어 표현·KST 날짜·에러 바운더리·`toApiResult` 재사용) 반영, 스코프 재리뷰 clean. 실 Supabase(리전 서울) B7 검증 13/13. 마이그레이션·env·스키마 무변경. 상세는 "묶음 B 최종 전체 브랜치 리뷰".
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
