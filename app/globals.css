@@ -50,6 +50,7 @@
   /* ── 마케팅(랜딩) 전용 토큰 — components/marketing/* 에서만 사용, 라이트 전용 ── */
   --color-paper: var(--wak-paper);
   --color-panel: var(--wak-panel);
+  --color-tint: var(--wak-tint);
   --color-ink: var(--wak-ink);
   --color-ink-soft: var(--wak-ink-soft);
   --color-line: var(--wak-line);
@@ -71,6 +72,8 @@
   --wak-resolved: #0c8b77;
   /* 오류 전용. 팔레트(청록·파랑) 밖의 산화철 계열 — paper 대비 6.1:1 */
   --wak-danger: #b32218;
+  --wak-tint: #eef1f7;
+  --wak-shadow-card: 0 1px 2px rgb(22 41 43 / 0.04), 0 12px 28px -20px rgb(22 41 43 / 0.22);
 }
 
 :root {
