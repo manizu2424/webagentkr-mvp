@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { z } from "zod";
 import { createSessionClient } from "@/lib/supabase/session-client";
+import { kstDate } from "@/lib/kst";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { StatusSelect } from "@/components/admin/status-select";
 import { MemoEditor } from "@/components/admin/memo-editor";
@@ -48,6 +50,7 @@ export default async function ConsultationDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!z.uuid().safeParse(id).success) notFound();
   const supabase = await createSessionClient();
 
   const { data, error } = await supabase
@@ -66,15 +69,20 @@ export default async function ConsultationDetail({
   const c = data as unknown as Consultation;
 
   let diagSummary: { score: number | null; summary: string | null } | null = null;
+  let diagError = false;
   if (c.diagnosis_id) {
-    const { data: dr } = await supabase
+    const { data: dr, error: drError } = await supabase
       .from("diagnosis_results")
       .select("automation_score,ai_summary")
       .eq("diagnosis_id", c.diagnosis_id)
       .maybeSingle();
-    diagSummary = dr
-      ? { score: dr.automation_score as number | null, summary: dr.ai_summary as string | null }
-      : { score: null, summary: null };
+    if (drError) {
+      diagError = true;
+    } else {
+      diagSummary = dr
+        ? { score: dr.automation_score as number | null, summary: dr.ai_summary as string | null }
+        : { score: null, summary: null };
+    }
   }
 
   const lead = c.leads;
@@ -104,7 +112,7 @@ export default async function ConsultationDetail({
         <Field label="방식" value={c.consultation_type ?? "—"} />
         <Field label="희망 시기" value={c.preferred_date ?? "—"} />
         <Field label="추정 서비스" value={c.suggested_service_type ?? "—"} />
-        <Field label="접수일" value={c.created_at.slice(0, 10)} />
+        <Field label="접수일" value={kstDate(c.created_at)} />
         <div className="flex gap-3 py-1.5 text-[0.88rem]">
           <span className="w-24 shrink-0 text-ink-soft">상태</span>
           <StatusSelect consultationId={c.id} current={c.status} />
@@ -115,8 +123,11 @@ export default async function ConsultationDetail({
         {c.diagnosis_id ? (
           <div className="text-[0.88rem]">
             <p className="text-ink">
-              자동화 준비도 {diagSummary?.score ?? "—"}
-              {diagSummary?.summary ? ` · ${diagSummary.summary.slice(0, 80)}` : ""}
+              {diagError
+                ? "진단 요약을 불러오지 못했습니다."
+                : `자동화 준비도 ${diagSummary?.score ?? "—"}${
+                    diagSummary?.summary ? ` · ${diagSummary.summary.slice(0, 80)}` : ""
+                  }`}
             </p>
             <Link
               href={`/admin/diagnoses/${c.diagnosis_id}`}

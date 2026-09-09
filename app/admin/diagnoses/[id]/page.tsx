@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { z } from "zod";
 import { createSessionClient } from "@/lib/supabase/session-client";
+import { toApiResult, type DiagnosisResultRow } from "@/lib/diagnosisResult";
 import { StatusBadge } from "@/components/admin/status-badge";
 
 type Diagnosis = {
@@ -15,16 +17,7 @@ type Diagnosis = {
   purpose: string | null;
   budget_range: string | null;
   pain_point: string | null;
-  created_at: string;
   leads: { company_name: string; industry: string; employee_count: string; contact_name: string; email: string; phone: string } | null;
-};
-type Result = {
-  automation_score: number | null;
-  recommended_tasks: { name: string; reason: string; difficulty?: string; estimatedMonthlySavedHours?: number }[];
-  estimated_saved_hours: { min: number; max: number } | null;
-  recommended_stack: string[] | null;
-  implementation_steps: string[] | null;
-  ai_summary: string | null;
 };
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -46,13 +39,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default async function DiagnosisDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!z.uuid().safeParse(id).success) notFound();
   const supabase = await createSessionClient();
 
   const { data, error } = await supabase
     .from("diagnoses")
     .select(
       "id,status,website_status,current_tools,repetitive_tasks,daily_hours,staff_count,monthly_volume," +
-        "purpose,budget_range,pain_point,created_at," +
+        "purpose,budget_range,pain_point," +
         "leads(company_name,industry,employee_count,contact_name,email,phone)",
     )
     .eq("id", id)
@@ -62,12 +56,12 @@ export default async function DiagnosisDetail({ params }: { params: Promise<{ id
   if (!data) notFound();
   const d = data as unknown as Diagnosis;
 
-  const { data: rRow } = await supabase
+  const { data: rRow, error: rError } = await supabase
     .from("diagnosis_results")
     .select("automation_score,recommended_tasks,estimated_saved_hours,recommended_stack,implementation_steps,ai_summary")
     .eq("diagnosis_id", id)
     .maybeSingle();
-  const r = rRow as unknown as Result | null;
+  const r = rRow ? toApiResult(rRow as DiagnosisResultRow) : null;
   const lead = d.leads;
 
   return (
@@ -100,36 +94,35 @@ export default async function DiagnosisDetail({ params }: { params: Promise<{ id
       <Section title="AI 결과">
         {r ? (
           <div className="flex flex-col gap-2 text-[0.88rem] text-ink">
-            <p>자동화 준비도: {r.automation_score ?? "—"} / 100</p>
+            <p>자동화 준비도: {r.automationScore} / 100</p>
             <p>
-              예상 절감 시간: {r.estimated_saved_hours ? `월 ${r.estimated_saved_hours.min}~${r.estimated_saved_hours.max}시간` : "—"}
+              예상 절감 시간: 월 {r.totalEstimatedSavedHours.min}~{r.totalEstimatedSavedHours.max}시간
             </p>
             <div>
               <p className="text-ink-soft">추천 업무</p>
               <ul className="mt-1 list-disc pl-5">
-                {r.recommended_tasks.map((t, i) => (
+                {r.priorityTasks.map((t, i) => (
                   <li key={i}>
-                    {t.name}
-                    {t.difficulty ? ` (난이도 ${t.difficulty}` : ""}
-                    {t.estimatedMonthlySavedHours != null ? `${t.difficulty ? ", " : " ("}월 ${t.estimatedMonthlySavedHours}시간` : ""}
-                    {t.difficulty || t.estimatedMonthlySavedHours != null ? ")" : ""}
+                    {t.name} (난이도 {t.difficulty}, 월 {t.estimatedMonthlySavedHours}시간)
                     {t.reason ? ` — ${t.reason}` : ""}
                   </li>
                 ))}
               </ul>
             </div>
-            <p>추천 스택: {r.recommended_stack?.length ? r.recommended_stack.join(", ") : "—"}</p>
+            <p>추천 스택: {r.recommendedStack.length ? r.recommendedStack.join(", ") : "—"}</p>
             <div>
               <p className="text-ink-soft">실행 단계</p>
               <ol className="mt-1 list-decimal pl-5">
-                {(r.implementation_steps ?? []).map((s, i) => (
+                {r.implementationSteps.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
               </ol>
             </div>
             <p className="text-ink-soft">요약</p>
-            <p>{r.ai_summary ?? "—"}</p>
+            <p>{r.summary || "—"}</p>
           </div>
+        ) : rError ? (
+          <p className="text-[0.88rem] text-danger">결과를 불러오지 못했습니다.</p>
         ) : (
           <p className="text-[0.88rem] text-ink-soft">결과 없음 (진단 상태: {d.status})</p>
         )}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createSessionClient } from "@/lib/supabase/session-client";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { cn } from "@/lib/utils";
+import { kstDate, kstTodayStartIso } from "@/lib/kst";
 
 const FILTERS = {
   all: { label: "전체", statuses: null as string[] | null },
@@ -20,12 +21,6 @@ type Row = {
   created_at: string;
   leads: { company_name: string } | null;
 };
-
-function todayStartIso(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
 
 export default async function AdminHome({
   searchParams,
@@ -46,7 +41,7 @@ export default async function AdminHome({
 
   const [{ data: rows, error }, todayDiag, newCount] = await Promise.all([
     query,
-    supabase.from("diagnoses").select("id", { count: "exact", head: true }).gte("created_at", todayStartIso()),
+    supabase.from("diagnoses").select("id", { count: "exact", head: true }).gte("created_at", kstTodayStartIso()),
     supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "NEW"),
   ]);
 
@@ -116,7 +111,7 @@ export default async function AdminHome({
                     {(r.consultation_type ?? "—") + " / " + (r.preferred_date ?? "—")}
                   </td>
                   <td className="py-2.5 pr-3 text-ink-soft">{r.suggested_service_type ?? "—"}</td>
-                  <td className="py-2.5 text-ink-soft">{r.created_at.slice(0, 10)}</td>
+                  <td className="py-2.5 text-ink-soft">{kstDate(r.created_at)}</td>
                 </tr>
               ))}
             </tbody>
