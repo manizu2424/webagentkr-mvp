@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Placeholder } from "@/components/marketing/legal/shell";
 
 export function SiteFooter() {
   return (
@@ -18,7 +19,21 @@ export function SiteFooter() {
           </Link>
         </nav>
       </div>
-      {/* TODO: 사업자등록번호 · 상호 · 대표자 · 주소 · 연락처 (전자상거래법 표기 의무) */}
+
+      {/* 전자상거래법·통신판매업 표기 의무. 사업자 정보 확정 후 채운다(묶음 C). */}
+      <div className="mx-auto max-w-[1120px] border-t border-line px-5 py-6 text-[0.78rem] leading-[1.9] text-ink-soft sm:px-8">
+        <p>
+          상호 <Placeholder>확정 필요</Placeholder> · 대표자{" "}
+          <Placeholder>확정 필요</Placeholder> · 사업자등록번호{" "}
+          <Placeholder>확정 필요</Placeholder> · 통신판매업신고번호{" "}
+          <Placeholder>확정 필요</Placeholder>
+        </p>
+        <p>
+          주소 <Placeholder>확정 필요</Placeholder> · 이메일{" "}
+          <Placeholder>확정 필요</Placeholder> · 개인정보 보호책임자{" "}
+          <Placeholder>확정 필요</Placeholder>
+        </p>
+      </div>
     </footer>
   );
 }

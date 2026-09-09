@@ -16,6 +16,7 @@ import { StepTasks } from "./step-tasks";
 import { StepWorkload } from "./step-workload";
 import { StepContact } from "./step-contact";
 import { Honeypot } from "./fields/honeypot";
+import { ConsentNotice } from "@/components/marketing/legal/consent-notice";
 
 const STEP_TITLES = [
   "회사 정보",
@@ -121,6 +122,8 @@ export function DiagnosisWizard() {
             {state.submitError}
           </p>
         )}
+
+        {state.step === 5 && <ConsentNotice action="무료 진단을" />}
 
         <div className="flex items-center justify-between gap-3 border-t border-line pt-6">
           <button

@@ -42,8 +42,12 @@
     - /diagnosis/[id]: 정적 "분석 중" (폴링은 Phase 2.1~2.2)
     - frontend-design 패스(Task 8, `4299cd3`): 5단계 진행률을 랜딩 히어로 파이프라인 컨셉(다이아몬드 노드 + 헤어라인 커넥터)으로 재설계, `--wak-danger` 토큰 도입해 오류 색상 통일(raw `red-*` 전량 교체), 접근성 버그 2건 수정(Tailwind v4 `outline-none`이 포커스 링 outline-style을 0으로 만드는 문제, `sr-only` 라디오 chip의 키보드 포커스 표시 부재 → `:has(:focus-visible)`로 해결), 탭 타겟 44px 이상 + `motion-reduce:transition-none` 가드
     - 검증: build/lint 통과, 0002 SQL, non-DB curl 3종, 폼 Playwright 흐름. DB 통합 검증은 Supabase 연결 시.
-- [ ] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)
-- [ ] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4
+- [~] Phase 2 — 3주차: 결과 파이프라인 (Mock 우선)  — 2.1~2.5 완료·머지 (PR #2, 2026-09-08). **2.6~2.9(실 n8n 워크플로우) 미착수** — n8n 인스턴스 필요(묶음 B 이후 "Phase B")
+- [~] Phase 3 — 4주차: 상담 + 관리자 + 법적 고지 + GA4  — 착수 순서 A→C→B→D
+  - [x] 묶음 A 상담 흐름 — 머지 (PR #3 `21130a9`, 2026-09-08). DB 통합 검증만 Supabase 연결 시 대기
+  - [x] 묶음 C 법적 고지 — 브랜치 `feat/legal-pages` (2026-09-09). 개인정보처리방침·이용약관 초안 + 링크 배선. `[확정 필요]` → Phase 4.7
+  - [ ] 묶음 B 관리자 화면 — B1(사용자 Supabase 설정) 선행
+  - [ ] 묶음 D GA4 — 마지막
 - [ ] Phase 4 — 지속(P1): 출시 마무리
 
 ---
@@ -207,11 +211,23 @@
 
 ### 묶음 C — 법적 고지  (A 다음)
 
-- [ ] **C1 개인정보처리방침** `app/(marketing)/privacy/page.tsx` (구 3.5 · 결함 #15) — 실제 인프라 기준 국외 이전 고지:
-      Telegram(상호 전송), Contabo VPS(독일), Supabase 리전, OpenAI. AI 호출에서 식별정보 제외 사실 반영.
-      초안 + `{/* 전문가 검토 필요 */}` 마커(전문가 검토는 사용자 몫).
-- [ ] **C2 이용약관** `app/terms/page.tsx` (구 3.6 · 신규 · 결함 #14) — 최소 이용약관 초안. 책임 범위·이용 조건.
-- [ ] **C3 링크 연결** — 랜딩 푸터 + 진단/상담 폼 동의 문구 → 두 페이지 링크.
+- [x] **C1 개인정보처리방침** `app/(marketing)/privacy/page.tsx` (구 3.5 · 결함 #15) — 13절 초안 + 국외 이전 표
+      (Supabase 미국`[리전]` / Contabo 독일 / OpenAI 미국 — 업무 데이터만·식별정보 미이전 / Telegram 소재지 불명·회사명·진단번호만
+      / Google 미국·비식별). 위탁 표 + 안전성 확보조치(RLS·service-role 분리·전송 암호화·2FA·백업·AI 식별정보 제외). 상단 "전문가 검토 전 초안" 배너.
+- [x] **C2 이용약관** `app/(marketing)/terms/page.tsx` (구 3.6 · 신규 · 결함 #14) — 10조 + 부칙 초안. 제4·7조에 **AI 결과=추정치·미보장**(기획서 §0 원칙 4) + 면책(무료 서비스 배상범위 제한). 스텁이 이미 `(marketing)` 그룹 경로에 있어 이동 없음.
+- [x] **C3 링크 연결** — `site-footer.tsx` 에 사업자 정보 라인(전부 `[확정 필요]`). 진단 wizard(step 5)·상담 폼 제출 버튼 위에
+      `components/marketing/legal/consent-notice.tsx`(신규) 로 "신청 시 이용약관·개인정보처리방침 동의 간주" 문구 + 링크 2개. `ConsentCheckbox` 는 개인정보용 그대로.
+
+### 묶음 C 이탈·메모 (2026-09-09)
+
+- 브랜치 `feat/legal-pages`. 마이그레이션·env·로직 없음(정적 콘텐츠 2쪽 + 링크 배선). plan 문서 없이 bounded 경로로 구현.
+- 공용 셸 `components/marketing/legal/shell.tsx` — `LegalShell`(배너 고정)·`LegalSection`·`LegalTable`·`Placeholder`. 두 페이지 + 푸터가 `Placeholder` 공유.
+- 두 법적 페이지는 `(marketing)` 레이아웃이 이미 `<main>` 을 감싸므로 루트를 `<div>` 로(기존 스텁의 중첩 `<main>` 제거).
+- **결함 #15 해소** — 국외 이전 분석이 AI 호출뿐 아니라 Contabo(독일)·Supabase 리전·Telegram 까지 포함.
+- **출시 전 필수 `[확정 필요]`** (전문가 검토는 사용자 몫): 사업자 정보(상호·대표자·사업자등록번호·통신판매업신고번호·주소·이메일),
+  개인정보 보호책임자, **Supabase 리전**, 시행일(개인정보처리방침·이용약관), 관할 법원, 보유기간(진단·상담/자동 생성 정보). → Phase 4.7 에 추가.
+- 검증: `tsc`·`eslint .`·`next build` 0 (privacy·terms 정적 `○`). Playwright — 두 페이지 13절/10조 + 배너 + 표 + `[확정 필요]` 마크,
+  푸터 사업자 정보 라인, 진단 step5 & 상담 폼 동의 문구 + `/terms`·`/privacy` 링크(`target=_blank`) 렌더 확인. DB 무관.
 
 ### 묶음 B — 관리자 화면  (C 다음 · 별도 API 없음, RLS 직접 조회 §4.4)
 
@@ -255,6 +271,11 @@
   - 개인정보 동의 없이 서버에서도 제출 거부(클라이언트 우회 테스트)
   - **추가**: 프록시 뒤에서 rate limit이 IP별로 동작하는지(결함 #2 회귀 방지)
   - **추가**: n8n 완료가 빠를 때 status가 PROCESSING으로 되돌아가지 않는지(결함 #1 회귀 방지)
+- [ ] 4.7 법적 페이지 `[확정 필요]` 채우기 (묶음 C 초안 → 실값) + **변호사·노무사 검토** — 출시 전 필수:
+  - 사업자 정보: 상호 · 대표자 · 사업자등록번호 · 통신판매업신고번호 · 주소 · 이메일 (`site-footer.tsx` + privacy §12/§13)
+  - 개인정보 보호책임자(성명·직책·이메일), 보유기간(진단·상담 / 자동 생성 정보)
+  - **Supabase 리전 확정** → privacy 국외이전 표 `[리전 확정 필요]` 반영 (리전 자체는 기획서 §15.2 "Seoul 권장")
+  - 시행일: 개인정보처리방침 · 이용약관 / 이용약관 관할 법원
 
 ---
 
@@ -295,8 +316,8 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 | #11 upsert 키 | 0.3, 3.1 (라운드 2 반영) |
 | #12 SUBMITTED | 2.1 |
 | #13 중복 제출 | 1.6 (라운드 2 반영) |
-| #14 P0/일정 불일치 | 3.6, 4.5 |
-| #15 국외 이전 | 3.5 + 사용자 작업 1 |
+| #14 P0/일정 불일치 | C2(약관 초안), 4.5 |
+| #15 국외 이전 | **C1 해소** (국외이전 표 + 위탁 표, 인프라 전체) + 사용자 작업 1 |
 | #16 env 분리 | 0.4, 0.6 |
 | #17 Dockerfile | 0.1, 0.6 |
 | #18 백업 플랜 | D5 → 4.5 |
@@ -323,6 +344,8 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-04: **Phase 1을 라운드로 분할.** 라운드 1 = 랜딩 페이지만(1.1), 폼·API(1.2~1.7)는 라운드 2. 1.1을 `frontend-design`으로 구현 — 워크플로 스파인 + 히어로 파이프라인 컨셉, Pretendard+Plex Mono, 라이트 전용, RSC 전용. 결함 #13 방식을 `idempotencyKey` + `diagnoses` UNIQUE로 확정(마이그레이션 `0002`, 라운드 2). 랜딩의 TODO 문구(구축 절차·신뢰 요소·FAQ·사업자 정보)는 확정 대기.
 - 2026-09-08: **Phase 2 완료·머지** (PR #2 → `main` `2d02c45`). 결과 파이프라인 Mock 우선 — 매핑 함수/픽스처, `GET /api/diagnoses/[id]`, `POST /api/dev/mock-result/[id]`, 폴링 아일랜드 + 6카드, frontend-design 패스. 최종 리뷰 Critical 0 → fix wave(`463f2fe`, 폴 겹침 방지·404 문구 분리·remount 가드) → 범위 재리뷰 clean. 실 DB 해피패스는 Supabase 연결 시 실측(미실행).
 - 2026-09-08: **Phase 3 를 4묶음으로 분해.** A(상담 흐름) / C(법적 고지) / B(관리자) / D(GA4), 착수 순서 A→C→B→D. 각 묶음 자체 spec→plan→구현. A 부터 착수(브랜치 `feat/consultation-flow`), 상세는 위 Phase 3 섹션.
+- 2026-09-08: **묶음 A(상담 흐름) 완료·머지** (PR #3 → `main` `21130a9`). `lib/serviceTagging.ts`, `POST /api/consultations`, 상담 폼(`?diagnosisId=` 프리필/직접 입력 2경로), 결과 페이지 상담 CTA. 최종 리뷰 opus Critical 0(I-1 클라이언트 검증·I-2 DB 조회 가드 반영). DB 통합 검증은 Supabase 연결 시(PR #3 본문 체크리스트).
+- 2026-09-09: **묶음 C(법적 고지) 완료** (브랜치 `feat/legal-pages`). 개인정보처리방침(13절 + 국외이전·위탁 표) + 이용약관(10조 + 부칙) 초안, 공용 셸 `components/marketing/legal/`, 푸터 사업자 정보 라인, 진단 step5·상담 폼 "동의 간주" 문구 + 링크. 전부 `[확정 필요]` 플레이스홀더(전문가 검토는 사용자 몫 → Phase 4.7). 결함 #15 해소. `tsc`·`eslint`·`build` 0, Playwright 렌더 확인. DB·마이그레이션·env 무관.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
