@@ -4,12 +4,14 @@ import {
   LegalSection,
   Placeholder,
 } from "@/components/marketing/legal/shell";
+import { pageMetadata } from "@/lib/siteMeta";
 
-export const metadata: Metadata = {
-  title: "이용약관 · WEBAGENT.KR",
+export const metadata: Metadata = pageMetadata({
+  title: "이용약관",
   description:
     "WEBAGENT.KR 웹사이트 및 자동화 진단·상담 서비스의 이용약관입니다.",
-};
+  path: "/terms",
+});
 
 // 이용약관 초안 — 기획서 §16.2 / CLAUDE.md 결함 #14(약관 부재) 해소.
 // 기획서 §0 원칙 4: AI 결과는 추정치이며 보장이 아님을 약관에 명시한다. 전문가 검토 전 초안(묶음 C).

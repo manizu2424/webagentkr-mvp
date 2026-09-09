@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { IBM_Plex_Mono } from "next/font/google";
 import { DiagnosisResult } from "@/components/diagnosis/result/diagnosis-result";
+
+// per-user 진단 결과 — 색인 금지.
+export const metadata: Metadata = {
+  title: "진단 결과",
+  robots: { index: false, follow: false },
+};
 
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],

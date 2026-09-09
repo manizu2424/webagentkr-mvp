@@ -13,7 +13,12 @@ import {
   subscribeConsent,
 } from "@/lib/consent";
 
-const MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
+const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
+const ANALYTICS_CONFIGURED = Boolean(GA4_ID || CLARITY_ID);
+const TOOL_LABEL = [GA4_ID && "Google Analytics 4", CLARITY_ID && "Microsoft Clarity"]
+  .filter(Boolean)
+  .join("와 ");
 
 function useAnalyticsConsent(): Consent | null {
   return useSyncExternalStore(
@@ -24,12 +29,12 @@ function useAnalyticsConsent(): Consent | null {
 }
 
 /**
- * 분석 쿠키 동의 배너 + GA4 로더. 루트 레이아웃에 1회 마운트한다.
+ * 분석 쿠키 동의 배너 + GA4/Clarity 로더. 루트 레이아웃에 1회 마운트한다.
  *
- * - 동의("granted") 전에는 gtag.js 를 주입하지 않는다(개인정보처리방침 §11).
- * - `/admin/*` 과 GA4 ID 미설정 시에는 배너도 스크립트도 없다.
- * - 철회(granted→denied)는 리로드 없이 `ga-disable-<ID>` 플래그로 즉시 반영되고,
- *   `lib/analytics.ts` 의 `track()` 도 동의 가드가 있어 이벤트 전송을 멈춘다.
+ * - 동의("granted") 전에는 어떤 분석 스크립트도 주입하지 않는다(개인정보처리방침 §11).
+ * - `/admin/*` 과 분석 ID 미설정 시에는 배너도 스크립트도 없다.
+ * - 철회(granted→denied)는 리로드 없이: GA4 는 `ga-disable-<ID>` 플래그, Clarity 는
+ *   `clarity("stop")`. `lib/analytics.ts` 의 `track()` 도 동의 가드가 있어 이벤트 전송을 멈춘다.
  */
 export function AnalyticsConsent() {
   const pathname = usePathname();
@@ -53,30 +58,42 @@ export function AnalyticsConsent() {
     };
   }, []);
 
-  // gtag 가 이미 로드된 뒤 거부로 바뀌어도 수집을 멈춘다(공식 opt-out 플래그).
+  // 스크립트가 이미 로드된 뒤 거부로 바뀌어도 수집을 멈춘다.
   useEffect(() => {
-    if (!MEASUREMENT_ID) return;
-    (window as unknown as Record<string, boolean>)[
-      `ga-disable-${MEASUREMENT_ID}`
-    ] = consent !== "granted";
+    const granted = consent === "granted";
+    if (GA4_ID) {
+      (window as unknown as Record<string, boolean>)[`ga-disable-${GA4_ID}`] =
+        !granted;
+    }
+    if (CLARITY_ID) {
+      const clarity = (window as unknown as { clarity?: (...a: unknown[]) => void })
+        .clarity;
+      clarity?.(granted ? "start" : "stop");
+    }
   }, [consent]);
 
-  if (!MEASUREMENT_ID || pathname?.startsWith("/admin")) return null;
+  if (!ANALYTICS_CONFIGURED || pathname?.startsWith("/admin")) return null;
 
   const bannerOpen = manualOpen || consent === null;
 
   return (
     <>
-      {consent === "granted" && (
+      {consent === "granted" && GA4_ID && (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
             strategy="afterInteractive"
           />
           <Script id="ga4-init" strategy="afterInteractive">
-            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${MEASUREMENT_ID}',{anonymize_ip:true});`}
+            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA4_ID}',{anonymize_ip:true});`}
           </Script>
         </>
+      )}
+
+      {consent === "granted" && CLARITY_ID && (
+        <Script id="clarity-init" strategy="afterInteractive">
+          {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${CLARITY_ID}");`}
+        </Script>
       )}
 
       {bannerOpen && <ConsentBanner current={consent} onChoice={setConsent} />}
@@ -99,7 +116,7 @@ function ConsentBanner({
     >
       <div className="mx-auto flex max-w-[1120px] flex-col gap-3 px-5 py-4 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <p className="leading-[1.7]">
-          이용 통계 분석을 위해 Google Analytics 4 분석 쿠키를 사용합니다.
+          이용 통계·사용성 분석을 위해 {TOOL_LABEL} 분석 쿠키를 사용합니다.
           동의하지 않아도 서비스 이용에는 제한이 없습니다.{" "}
           <Link
             href="/privacy"

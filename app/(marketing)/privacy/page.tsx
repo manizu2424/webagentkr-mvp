@@ -5,12 +5,14 @@ import {
   LegalTable,
   Placeholder,
 } from "@/components/marketing/legal/shell";
+import { pageMetadata } from "@/lib/siteMeta";
 
-export const metadata: Metadata = {
-  title: "개인정보처리방침 · WEBAGENT.KR",
+export const metadata: Metadata = pageMetadata({
+  title: "개인정보처리방침",
   description:
     "WEBAGENT.KR이 무료 자동화 진단·상담 과정에서 수집하는 개인정보의 처리 방침입니다.",
-};
+  path: "/privacy",
+});
 
 // 개인정보처리방침 초안 — 기획서 §16.1 / CLAUDE.md 결함 #15(국외 이전 고지) 해소.
 // 실제 인프라 기준으로 위탁·국외이전을 명시한다. 전문가 검토 전 초안(묶음 C).
@@ -106,6 +108,10 @@ export default function PrivacyPage() {
             ["OpenAI, L.L.C.", "진단 입력값에 대한 AI 분석 처리"],
             ["Telegram FZ-LLC", "진단·상담 접수 관리자 알림 발송"],
             ["Google LLC", "웹사이트 이용 통계 분석 (이용자가 분석 쿠키에 동의한 경우)"],
+            [
+              "Microsoft Corporation",
+              "웹사이트 사용성 분석 — 세션 리플레이·히트맵 (이용자가 분석 쿠키에 동의한 경우)",
+            ],
           ]}
         />
       </LegalSection>
@@ -178,6 +184,14 @@ export default function PrivacyPage() {
               "웹사이트 이용 통계 분석",
               "Google 정책에 따름",
             ],
+            [
+              "Microsoft Corporation",
+              "미국",
+              "이용자가 분석 쿠키 사용에 동의한 경우 이전",
+              "쿠키 식별자, 페이지 상호작용(클릭·스크롤·마우스 이동 등) 기록",
+              "웹사이트 사용성 분석 (세션 리플레이·히트맵)",
+              "Microsoft 정책에 따름",
+            ],
           ]}
         />
         <p>
@@ -227,9 +241,10 @@ export default function PrivacyPage() {
         <ul className="list-disc pl-5">
           <li>회사는 서비스 운영에 필수적인 쿠키를 사용하지 않습니다.</li>
           <li>
-            웹사이트 이용 통계를 위해 Google Analytics 4를 사용하며, 이는
-            이용자가 분석 쿠키 사용에 동의한 경우에만 로드됩니다. 동의를 거부하면
-            분석 스크립트가 실행되지 않습니다.
+            웹사이트 이용 통계 및 사용성 분석을 위해 Google Analytics 4와
+            Microsoft Clarity를 사용하며, 이는 이용자가 분석 쿠키 사용에 동의한
+            경우에만 로드됩니다. 동의를 거부하면 분석 스크립트가 실행되지 않으며,
+            이용자는 페이지 하단 “쿠키 설정”에서 언제든 동의를 철회할 수 있습니다.
           </li>
           <li>이용자는 브라우저 설정을 통해 쿠키 저장을 거부할 수 있습니다.</li>
         </ul>
