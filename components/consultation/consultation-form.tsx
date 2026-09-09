@@ -8,6 +8,7 @@ import { TextField } from "@/components/diagnosis/fields/text-field";
 import { SelectField } from "@/components/diagnosis/fields/select-field";
 import { ConsentCheckbox } from "@/components/diagnosis/fields/consent-checkbox";
 import { Honeypot } from "@/components/diagnosis/fields/honeypot";
+import { ConsentNotice } from "@/components/marketing/legal/consent-notice";
 import { submitConsultation } from "./submit";
 import { ConsultationSuccessView } from "./success-view";
 
@@ -114,6 +115,8 @@ export function ConsultationForm({ diagnosisId }: { diagnosisId: string | undefi
             {formError}
           </p>
         )}
+
+        <ConsentNotice action="상담을" />
 
         <div className="flex justify-end border-t border-line pt-6">
           <button
