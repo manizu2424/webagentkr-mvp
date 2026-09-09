@@ -6,30 +6,56 @@
 import { z } from "zod";
 import { OPTIONS } from "@/lib/options";
 
+/** select 미선택/잘못된 값일 때 필드별 한글 문구 (CLAUDE.md "한글 전용" 규약).
+ *  폼이 미입력 필드에 undefined 를 보내므로, 누락·빈값·잘못된 enum 값을 모두 이 한 문구로 덮는다. */
+const SELECT_MSG: Record<keyof typeof OPTIONS, string> = {
+  industry: "업종을 선택해 주세요",
+  employeeCount: "직원 수를 선택해 주세요",
+  websiteStatus: "홈페이지 유무를 선택해 주세요",
+  currentTools: "사용 도구를 선택해 주세요",
+  repetitiveTasks: "반복 업무를 선택해 주세요",
+  dailyHours: "하루 반복 업무 시간을 선택해 주세요",
+  staffCount: "담당 인원을 선택해 주세요",
+  monthlyVolume: "월간 처리 건수를 선택해 주세요",
+  purpose: "도입 목적을 선택해 주세요",
+  budgetRange: "예산 범위를 선택해 주세요",
+  consultingMethod: "상담 방식을 선택해 주세요",
+  preferredDate: "희망 상담 시기를 선택해 주세요",
+};
+
 /** OPTIONS 의 readonly 라벨 배열 → zod enum (저장 값과 1:1).
- *  message 를 주면 잘못된 값일 때 그 한글 메시지를 쓴다(기본은 zod 기본 문구). */
+ *  message 미지정 시 SELECT_MSG 의 필드별 한글 문구를 쓴다. */
 const opt = <K extends keyof typeof OPTIONS>(k: K, message?: string) =>
-  z.enum(OPTIONS[k], message ? { error: () => message } : undefined);
+  z.enum(OPTIONS[k], { error: () => message ?? SELECT_MSG[k] });
 
 /** 한국 휴대폰 번호 — 하이픈 유무 모두 허용 (010-1234-5678 / 01012345678) */
 export const KR_PHONE_RE = /^01[016789]-?\d{3,4}-?\d{4}$/;
 const phone = z
-  .string()
+  .string({ error: "휴대폰 번호를 입력해 주세요" })
   .trim()
   .regex(KR_PHONE_RE, { error: "휴대폰 번호 형식이 올바르지 않습니다" });
 
 const email = z
-  .email({ error: "이메일 형식이 올바르지 않습니다" })
+  .string({ error: "이메일을 입력해 주세요" })
   .trim()
-  .toLowerCase();
+  .toLowerCase()
+  .pipe(z.email({ error: "이메일 형식이 올바르지 않습니다" }));
 
 /** 허니팟 — 봇이 채우는 필드. 항상 빈 문자열이어야 함 (기술 스펙 §5) */
 const honeypot = z.string().max(0).optional().default("");
 
+/** 필수 텍스트 — 누락(undefined)·빈값·초과를 모두 한글로. */
+const requiredText = (missing: string, tooLong: string, max: number) =>
+  z.string({ error: missing }).trim().min(1, { error: missing }).max(max, { error: tooLong });
+
 // ── POST /api/diagnoses (기술 스펙 §4.1 + docs/decisions.md D1) ──────────
 export const diagnosisSubmissionSchema = z.object({
   // 1단계 회사 정보
-  companyName: z.string().trim().min(1, { error: "회사명을 입력해 주세요" }).max(100),
+  companyName: requiredText(
+    "회사명을 입력해 주세요",
+    "회사명은 100자 이하로 입력해 주세요",
+    100,
+  ),
   industry: opt("industry"),
   employeeCount: opt("employeeCount"),
   websiteStatus: opt("websiteStatus"),
@@ -40,12 +66,21 @@ export const diagnosisSubmissionSchema = z.object({
   dailyHours: opt("dailyHours"),
   staffCount: opt("staffCount"),
   monthlyVolume: opt("monthlyVolume"),
-  painPoint: z.string().trim().max(1000).optional().default(""),
+  painPoint: z
+    .string()
+    .trim()
+    .max(1000, { error: "1000자 이하로 입력해 주세요" })
+    .optional()
+    .default(""),
   // 5단계 상담 정보  (D1: purpose 추가)
   purpose: opt("purpose"),
   budgetRange: opt("budgetRange"),
   consultingMethod: opt("consultingMethod"),
-  contactName: z.string().trim().min(1, { error: "이름을 입력해 주세요" }).max(50),
+  contactName: requiredText(
+    "이름을 입력해 주세요",
+    "이름은 50자 이하로 입력해 주세요",
+    50,
+  ),
   email,
   phone,
   // 동의 — 서버에서도 재검증 (true 아니면 400)
@@ -132,16 +167,24 @@ export const N8N_PAYLOAD_KEYS = [
 export const consultationSubmissionSchema = z
   .object({
     diagnosisId: z.uuid({ error: "잘못된 요청입니다" }).optional(),
-    // 재입력 경로 (diagnosisId 없을 때 필수)
-    companyName: z.string().trim().max(100).optional(),
-    contactName: z.string().trim().max(50).optional(),
+    // 재입력 경로 (diagnosisId 없을 때 필수 — 아래 superRefine)
+    companyName: z
+      .string()
+      .trim()
+      .max(100, { error: "회사명은 100자 이하로 입력해 주세요" })
+      .optional(),
+    contactName: z
+      .string()
+      .trim()
+      .max(50, { error: "이름은 50자 이하로 입력해 주세요" })
+      .optional(),
     email: email.optional(),
     phone: phone.optional(),
     industry: opt("industry").optional(),
     employeeCount: opt("employeeCount").optional(),
     // 공통
-    preferredDate: opt("preferredDate", "희망 상담 시기를 선택해 주세요"),
-    consultationType: opt("consultingMethod", "상담 방식을 선택해 주세요"),
+    preferredDate: opt("preferredDate"),
+    consultationType: opt("consultingMethod"),
     consentAgreed: z.literal(true, {
       error: () => "개인정보 수집·이용 동의가 필요합니다",
     }),

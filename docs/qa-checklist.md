@@ -254,8 +254,8 @@ D1~D3 메시지 본문에 이름/휴대폰/이메일이 한 글자도 없는지 
 | B1 동의 우회 | ✅ PASS | `consentAgreed` 누락 → `400 {"error":"validation"}` + 한글 메시지. DB 무기록 |
 | B2 허니팟 | ✅ PASS | `hp_field` 채움 → `200 {"ok":true}`. DB 무기록 |
 | B3 전화번호 형식 | ✅ PASS | `phone:"12345"` → 400, `path:["phone"]`, "휴대폰 번호 형식이 올바르지 않습니다" |
-| B4 필수값 누락 | ⚠️ PASS(부분) | 제출 차단 + 400 + `path:["companyName"]` 정상. **단, 필드가 아예 없을 때 메시지가 영문 zod 기본**("Invalid input: expected string, received undefined") — 아래 알려진 이슈 참고 |
-| B5 폼 UI 오류 문구 | ❌ FAIL | 1단계 빈 상태 "다음" → 진행 차단 + 필드별 `[invalid]` + 오류 문단 렌더(동작 OK)이나 문구가 **영문 zod 기본**("Invalid option: expected one of …"). "한글 전용" 규약 위반 — 아래 알려진 이슈 |
+| B4 필수값 누락 | ✅ PASS | 제출 차단 + 400 + `path:["companyName"]` + "회사명을 입력해 주세요" (2026-09-09 한글 메시지 수정 후) |
+| B5 폼 UI 오류 문구 | ✅ PASS | 1단계 빈 상태 "다음" → 진행 차단 + 필드별 한글 오류 4건("회사명을 입력해 주세요"·"업종을 선택해 주세요" 등), 영문 0 (2026-09-09 `lib/validation.ts` 수정) |
 | B6 rate limit 429 | ✅ PASS | 신규 서버에서 5×400 후 6회째 `429` + `Retry-After` |
 | C1 FAILED (API) | ✅ PASS | `?outcome=failed` → `status=FAILED`, 결과행 0, `[진단 실패]` Telegram 시도. UI 사과+CTA 는 Phase 2/묶음 A 에서 검증됨 |
 | C2 폴링 타임아웃 | ✅ PASS | `?_test_maxAttempts=2` → "예상보다 오래 걸리고 있습니다" + "상담 신청하기" CTA(`/consultation`) |
@@ -265,7 +265,7 @@ D1~D3 메시지 본문에 이름/휴대폰/이메일이 한 글자도 없는지 
 | C4 결함 #1 회귀 | ✅ PASS | `PROCESSING` → mock `COMPLETED` → 3회 폴링 모두 `COMPLETED`(되돌림 없음) |
 | E1 반응형(375px) | ✅ PASS | `/`·`/diagnosis`·`/privacy` 페이지 가로 스크롤 없음(`scrollWidth ≤ 375`). 법적 표는 자체 `overflow-x` 컨테이너 안에서만 스크롤 |
 
-### 이번 실행에서 발견한 알려진 이슈 (별도 태스크 필요)
+### 이번 실행에서 발견한 이슈
 
-1. **zod 오류 메시지 영문 노출** (`lib/validation.ts`) — 진단 폼에서 값을 건드리지 않은 필수 필드는 wizard 가 `undefined` 를 보내 `opt()`/`min(1)` 의 한글 메시지 대신 zod 타입 에러 영문 문구가 그대로 노출된다. CLAUDE.md "한글 전용" 규약 위반. Phase 1 이탈·메모에 이미 기록된 미착수 항목. 수정 범위: (a) `lib/validation.ts` 각 필드에 한글 `error`/`message` 보강, (b) wizard 가 미입력 필드에 `""` 를 보내도록(또는 단계 스키마에서 `undefined`→한글 매핑). 출시 전 처리 권장.
+1. ~~zod 오류 메시지 영문 노출~~ — **해결 (2026-09-09, `fix/validation-korean-messages`).** `lib/validation.ts` 의 `opt()` 헬퍼에 필드별 `SELECT_MSG` 맵 + `requiredText()` 헬퍼 도입. 누락(`undefined`)·빈값·잘못된 enum 값·형식 오류 모두 한글. 진단 14필드 + 상담 스키마 curl 검증, 진단 폼 1단계 Playwright 재확인.
 2. **DB 잔여 시드** — 묶음 B 관리자 콘솔 검증 시드(`admin-verify-A/B@webagent.test`, `검증상담_A/B`, 2026-09-09 03:41 생성)가 삭제되지 않고 남아 있음(leads 2 / diagnoses 1 / consultations 2). 실사용 데이터 아님 — 출시 전 삭제.

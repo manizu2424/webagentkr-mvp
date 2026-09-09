@@ -333,7 +333,7 @@
   각 항목을 트리거 방법·절차·기대 결과·결과 기록란 + 환경 태그(`[로컬]`/`[로컬+DB]`/`[배포]`/`[배포+n8n]`/`[실기기]`)로 확장.
   A 퍼널 happy path·B 검증/스팸·C 실패 경로(결함 #1·#2 회귀 포함)·D Telegram·E 반응형·F 관리자·G SEO/분석.
   - **로컬 사전 검증 13항목 실행** (dev + 실 Supabase 서울, `*@qa.test` 테스트 행 생성 후 전량 삭제): 11 PASS.
-    - ❌ **B5 FAIL** — 진단 폼 필수값 미입력 시 오류 문구가 **영문 zod 기본**("Invalid option: expected one of …"). "한글 전용" 규약 위반(Phase 1 이탈·메모의 미착수 항목). 별도 태스크로 `lib/validation.ts` 한글 메시지 보강 필요.
+    - ~~B5 FAIL — 진단 폼 필수값 미입력 시 영문 zod 메시지~~ → **해결** (`fix/validation-korean-messages`, 2026-09-09). `lib/validation.ts` `opt()` 에 `SELECT_MSG` 맵 + `requiredText()` 헬퍼. 재검증 후 B4·B5 PASS.
     - ⚠️ DB 잔여 시드 발견 — 묶음 B 검증 시드(`admin-verify-A/B@webagent.test`, 03:41 생성)가 미삭제. 출시 전 정리.
   - 나머지(모바일 실기기·Telegram 3종·프록시 IP·관리자·SEO 라이브)는 배포 후 문서 따라 실행.
 - [ ] 4.7 법적 페이지 `[확정 필요]` 채우기 (묶음 C 초안 → 실값) + **변호사·노무사 검토** — 출시 전 필수:
@@ -428,6 +428,9 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-09: **묶음 A + Phase 2 실 DB 검증 완료.** 사용자가 Supabase 프로젝트 + `0001`·`0002` + `.env`(Supabase/Telegram) 세팅. `npm run dev` 로 실 DB·실 Telegram 상대 검증 **26/26 pass** (Phase 2 결과 파이프라인 4뷰 + 멱등성, 묶음 A 7체크 + 동의/허니팟/rate limit). 상세는 위 "묶음 A + Phase 2 — 실 DB 검증". Telegram 문구·PII 경계 최종 육안 확인은 사용자 몫. 검증 데이터 정리 완료(전 테이블 0행). `.env.example` 에 `NEXT_PUBLIC_SUPABASE_URL` 주석 추가.
 - 2026-09-09: **묶음 B(관리자 화면) 완료·머지** (PR #7 → `main`, base `a19d28f` → head `f57b5df`). SSR 인증 게이트(`proxy.ts` + `lib/supabase/session-client.ts`) + 로그인 + 상담 목록/상세(상태 전이·메모 server action) + 진단 상세(읽기 전용). 전용 API 없이 RLS `authenticated` 직접 조회. SDD 서브에이전트 실행(7 태스크, 각 구현+리뷰) + opus 최종 전체 리뷰 → Critical 1(문서 내 검증계정 평문 비번 — 계정 삭제·redact) + Important 6(server action 인가 가드·0행 저장 실패·layout 방어 표현·KST 날짜·에러 바운더리·`toApiResult` 재사용) 반영, 스코프 재리뷰 clean. 실 Supabase(리전 서울) B7 검증 13/13. 마이그레이션·env·스키마 무변경. 상세는 "묶음 B 최종 전체 브랜치 리뷰".
 - 2026-09-09: **묶음 D(GA4) 완료·머지** (PR #8 → `main` `fe6cdfb`). bounded 경로(spec/plan 문서 없음, 채팅 설계안 승인 후 구현). `lib/consent.ts`(localStorage + 커스텀 이벤트) + `components/analytics/{analytics-consent,cookie-settings-link}.tsx` + `lib/analytics.ts` `track()` 동의 가드 + 루트 레이아웃 마운트 + 푸터 링크. 옵트인(개인정보처리방침 §11 계약), 동의 전 gtag 완전 미주입, `/admin`·env 미설정 제외, 철회는 `ga-disable` 플래그로 리로드 없이. D3 이벤트 감사 결과 6종 전부 §9 위치 일치 → 호출부 코드 무변경. `tsc`·`eslint`·`build` 0, Playwright 8경로 통과. 결함 #22 해소. 마이그레이션·DB 무관. Clarity 는 Phase 4.4 유지. 상세는 "묶음 D 이탈·메모".
+- 2026-09-09: **Phase 4.4 SEO 완료·머지** (PR #9 → `main` `fe6cdfb`→`5cff12b`). `lib/siteMeta.ts` + `app/{sitemap,robots,opengraph-image,icon}` + 페이지별 metadata + 홈 JSON-LD + per-user/스텁/`/admin` noindex + Microsoft Clarity 를 동의 게이트에 배선 + privacy §6·§7·§11 Microsoft 행(초안→4.7). 상세는 "4.4 이탈·메모".
+- 2026-09-09: **Phase 4.6 QA 체크리스트 준비·머지** (PR #10 → `main` `2e45567`). `docs/qa-checklist.md` — §17.2 를 환경 태그·트리거 명령·기대 결과로 상세화. 로컬 사전 검증 13항목 → 11 PASS + B5 FAIL(zod 영문 메시지) + DB 잔여 시드 발견.
+- 2026-09-09: **zod 한글 메시지 수정** (`fix/validation-korean-messages`, 4.6 B5 후속). `lib/validation.ts` `opt()` 에 `SELECT_MSG` 필드별 맵 + `requiredText()` 헬퍼, `phone`/`email` constructor `error`. 진단 14필드 + 상담 스키마 누락·형식오류·enum오류 전부 한글화. Playwright(진단 폼 1단계) + curl 재검증 → B4·B5 PASS. Phase 1 이탈·메모의 미착수 항목 해소. `tsc`·`eslint`·`build` 0.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
@@ -437,6 +440,6 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - `next.config.ts`에 `output: "standalone"`, `.gitignore`에 `n8n.env`/`!*.example` 규칙 추가.
 
 ### Phase 1 이탈·메모
-- **후속 필요**: `lib/validation.ts`(Task 2)의 zod 스키마 필드 일부는 커스텀 한글 `error:` 메시지가 없어, 값이 zod 기본 규칙(타입 불일치 등)에 걸리면 영문 기본 메시지("Invalid input: expected string, received undefined")가 그대로 노출된다. 전화번호 정규식·`idempotencyKey` 등 일부 필드는 한글 메시지가 이미 있음. Task 8(스타일 전용 범위) 검토 중 발견됐으나 이번 9태스크 계획 어디에도 스코프가 없어 미착수 — "한글 전용" 원칙에 어긋나므로 `lib/validation.ts`에 한글 `error:`/`message:` 보강 필요.
+- ~~**후속 필요**: `lib/validation.ts` zod 필드 일부에 한글 `error:` 없어 영문 기본 메시지 노출~~ → **해결** (`fix/validation-korean-messages`, 2026-09-09, 4.6 QA 에서 재확인 후). `opt()` 헬퍼에 필드별 `SELECT_MSG` 맵 + `requiredText()`(누락·빈값·초과 한글) 헬퍼, `phone`/`email` 에 constructor `error` 추가. 진단 14필드 + 상담 스키마 누락/형식오류/enum오류 전부 한글. 진단 폼 1단계 Playwright 재확인. `tsc`·`eslint`·`build` 0.
 - **알려진 한계 (결함 #11 / I3)**: `POST /api/diagnoses` 의 `leads` upsert 는 `onConflict: "email"` 이라 "마지막 연락처가 이긴다". 공용 메일함(`info@`·`ceo@`)으로 다른 사람이 재제출하면 `contact_name`·`phone`·`company_name` 이 덮어써져, 먼저 접수된 `diagnoses` 행이 다른 사람 연락처와 묶인다(관리자 화면 Phase 3 에서 그대로 노출). 스펙 §5.1 6단계·결함 #11 이 재방문자 500 방지를 위해 이 방식을 명시하므로 MVP 는 유지 — post-MVP 에서 `leads` append-only + 리포트 계층 email 디둡으로 재검토. 최종 리뷰에서 docs-only 로 확정(쿼리 변경 없음).
 - **되돌림 (최종 리뷰 m8)**: SDD 원장 Ruling 1 로 추가했던 `tsx` devDependency 를 소비처가 없어 제거(`npm uninstall tsx`). 일회성 테스트는 계획대로 `node --experimental-strip-types` 를 쓰고 `_wak_*.mts` 는 사용 후 삭제됐으므로 `tsx` 는 죽은 의존성이었음.
