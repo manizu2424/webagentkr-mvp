@@ -3,8 +3,12 @@
 이 디렉터리의 `diagnosis-pipeline.json` · `error-trigger.json` 을 n8n **2.x** 에 import 해서
 Phase 2 의 Mock(`POST /api/dev/mock-result/[id]`) 을 실제 OpenAI 파이프라인으로 대체한다.
 
-> ⚠️ 이 JSON 은 손으로 작성했고 특정 인스턴스에서 실행 검증하지 않았다. import 후 첫 실행에서
-> 노드별 조정(만료 노드 재저장, 표현식, 배열 컬럼)이 필요할 수 있다 — 아래 "흔한 조정" 참고.
+> **2026-09-09 로컬 실측:** n8n 2.12.2 + gpt-4o + 실 Supabase 로 전 구간 확인.
+> `diagnosis_results` 6컬럼(jsonb·text[] 포함) 정상 insert. `Mark COMPLETED` 표현식 버그 1건
+> 수정함(아래). Telegram 은 이 개발 PC 의 IPv6 문제로 미도달 — 배포 환경에서 확인.
+>
+> **수정 후 재-import 필요:** `diagnosis-pipeline.json` 의 `Insert result`·`Mark COMPLETED`·`Notify success`
+> 노드가 이제 `$('Validate response')` 를 참조한다(Insert 뒤 `$json` 이 바뀌어 `diagnosisId` 유실되던 문제).
 
 ---
 
@@ -111,8 +115,7 @@ n8n Executions 에서 실행을 열어 노드별 통과를 확인. `diagnoses.st
 | 증상 | 원인 / 대응 |
 |---|---|
 | import 시 노드가 "outdated" | 해당 노드 열고 그대로 저장하면 현재 버전으로 마이그레이션됨 |
-| `recommended_stack` / `implementation_steps` 가 문자열로 저장됨 | `text[]` 컬럼의 PostgREST 인코딩 이슈. 그 두 `fieldValue` 를 `={{ JSON.stringify($json.row.recommended_stack) }}` 로 바꾸거나, `Insert result` 를 HTTP Request 노드(`POST {supabaseUrl}/rest/v1/diagnosis_results`, 헤더 `apikey`+`Authorization: Bearer {service_role}`, body `={{ $json.row }}`)로 교체 |
-| `recommended_tasks` / `estimated_saved_hours` 가 이중 인코딩 | 반대로 이건 `JSON.stringify` **하면 안 됨**(jsonb 컬럼). 표현식을 `={{ $json.row.recommended_tasks }}` 그대로 유지 |
+| `N8N_WEBHOOK_SECRET` 을 `.env` 에 넣었는데 계속 403 | 값에 `#` 가 있으면 dotenv 가 `#` 뒤를 주석으로 자른다. `.env` 에서 값을 큰따옴표로 감쌀 것: `N8N_WEBHOOK_SECRET="..."`. 또는 `openssl rand -hex 16`(특수문자 없음)으로 재발급 |
 | Telegram `chat not found` | `TELEGRAM_ADMIN_CHAT_ID` env 미설정 — 2단계 참고, 또는 노드에 숫자 직접 입력 |
 | Webhook 이 401/403 | Header Auth credential 의 Name 이 정확히 `x-webhook-secret` 인지, Value 가 Next.js `N8N_WEBHOOK_SECRET` 과 같은지 확인 |
 | n8n 이 응답은 하는데 진단이 계속 "처리중" | Webhook `responseMode` 가 `onReceived` 인지 확인. Next.js 는 webhook 이 10초 안에 200 을 주길 기대하고, OpenAI 호출은 그보다 오래 걸림 — 즉시 응답 후 뒤에서 처리해야 함 |

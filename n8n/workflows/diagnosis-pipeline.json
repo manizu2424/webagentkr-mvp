@@ -128,31 +128,31 @@
           "fieldValues": [
             {
               "fieldId": "diagnosis_id",
-              "fieldValue": "={{ $json.row.diagnosis_id }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.diagnosis_id }}"
             },
             {
               "fieldId": "automation_score",
-              "fieldValue": "={{ $json.row.automation_score }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.automation_score }}"
             },
             {
               "fieldId": "recommended_tasks",
-              "fieldValue": "={{ $json.row.recommended_tasks }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.recommended_tasks }}"
             },
             {
               "fieldId": "estimated_saved_hours",
-              "fieldValue": "={{ $json.row.estimated_saved_hours }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.estimated_saved_hours }}"
             },
             {
               "fieldId": "recommended_stack",
-              "fieldValue": "={{ $json.row.recommended_stack }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.recommended_stack }}"
             },
             {
               "fieldId": "implementation_steps",
-              "fieldValue": "={{ $json.row.implementation_steps }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.implementation_steps }}"
             },
             {
               "fieldId": "ai_summary",
-              "fieldValue": "={{ $json.row.ai_summary }}"
+              "fieldValue": "={{ $('Validate response').first().json.row.ai_summary }}"
             }
           ]
         }
@@ -182,7 +182,7 @@
             {
               "keyName": "id",
               "condition": "eq",
-              "keyValue": "={{ $json.diagnosisId }}"
+              "keyValue": "={{ $('Validate response').first().json.diagnosisId }}"
             }
           ]
         },
@@ -214,7 +214,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
-        "text": "=신규 진단 완료: {{ $json.diagnosisId || $('Validate response').first().json.diagnosisId }}",
+        "text": "=신규 진단 완료: {{ $('Validate response').first().json.diagnosisId }}",
         "additionalFields": {}
       },
       "id": "n-notify-ok",
@@ -230,7 +230,8 @@
           "id": "",
           "name": "WEBAGENT Telegram bot"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -290,7 +291,8 @@
           "id": "",
           "name": "WEBAGENT Telegram bot"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
