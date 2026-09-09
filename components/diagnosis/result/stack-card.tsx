@@ -1,4 +1,4 @@
-// 스택 항목은 "시스템 부품" — 랜딩 flow-diagram 의 노드 박스와 같은 조합(모노 + panel + line).
+// 스택 항목은 "시스템 부품" — 히어로 흐름도(hero-flow) 의 노드 박스와 같은 조합(모노 + panel + line).
 export function StackCard({ stack }: { stack: string[] }) {
   if (!stack.length) return null;
   return (
