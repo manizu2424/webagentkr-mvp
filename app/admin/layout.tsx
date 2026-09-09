@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import { createSessionClient } from "@/lib/supabase/session-client";
 import { AdminShell } from "@/components/admin/admin-shell";
 
-// 미들웨어(proxy.ts)가 이미 미인증 접근을 막지만, 레이아웃에서도 세션을 재확인한다(방어).
-// 세션 없음 = /admin/login 만 여기 도달 → 셸 없이 폼만 렌더.
+// proxy.ts 가 /admin/* 미인증 접근을 /admin/login 으로 돌린다 → 세션 없이 여기 도달하는 건
+// 로그인 페이지뿐이다. 그때는 셸(헤더/로그아웃) 없이 폼만 렌더한다.
+// 실제 데이터 보호는 이 레이아웃이 아니라 RLS(anon 롤 정책 0개) + server action 의 getUser() 가드다.
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createSessionClient();
   const {

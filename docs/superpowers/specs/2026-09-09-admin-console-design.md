@@ -37,7 +37,7 @@
 | # | 결정 | 이유 |
 |---|---|---|
 | B-a | 인증 = **SSR 게이트**: `middleware.ts`가 세션 쿠키 갱신 + `/admin/*` 리다이렉트, `lib/supabase/session-client.ts`가 RSC/server action용 쿠키 인식 클라이언트 | 사용자 확정(2026-09-09). CLAUDE.md는 "브라우저 클라이언트 직접 조회"라 적었으나, 서버 게이트가 미인증 요청을 서버에서 차단하고 admin 셸 깜빡임이 없으며 RSC 조회가 단순함. service-role은 여전히 서버 전용이고 세션 클라이언트는 anon+세션이라 RLS 모델 불변 |
-| B-b | 미들웨어가 리다이렉트 주체. 레이아웃은 **방어적 재확인**만 | 미들웨어는 요청 경로를 알아 게이트/역게이트(`/admin/login` → `/admin`)가 자연스러움. `app/admin/layout.tsx`는 `getUser()` 후 세션 없으면 `{children}`(로그인), 있으면 `<AdminShell>`. 라우트 그룹 불필요(로그인이 유일한 비게이트 페이지) |
+| B-b | 미들웨어(proxy.ts)가 리다이렉트 주체. 레이아웃 `getUser()` 는 **셸 분기용; 실 방어는 RLS + action 가드** | 미들웨어는 요청 경로를 알아 게이트/역게이트(`/admin/login` → `/admin`)가 자연스러움. `app/admin/layout.tsx`는 `getUser()` 후 세션 없으면 `{children}`(로그인), 있으면 `<AdminShell>` — 데이터 보호가 아니라 헤더/로그아웃 셸을 씌울지 정하는 용도. 라우트 그룹 불필요(로그인이 유일한 비게이트 페이지) |
 | B-c | `/admin` = 상담 목록 홈. 별도 `/admin/dashboard` 없음 | 비목표. MVP 관리자 작업은 상담 파이프라인이 전부. 진단은 종속 참고자료 |
 | B-d | 상태 필터 = `?filter=` 쿼리 파라미터(RSC 재조회), 값 `all`(기본)·`new`·`active`·`closed` | 클라이언트 상태 불필요. `active` = `CONTACT_PENDING·SCHEDULED·PROPOSAL_SENT`, `closed` = `CONTRACTED·ON_HOLD·CLOSED` |
 | B-e | 상태 변경·메모 저장 = **server action** (`app/admin/consultations/[id]/actions.ts`, `"use server"`) | API 라우트 안 만듦(규약). 세션 클라이언트로 update + `revalidatePath`. 클라이언트 번들에서 제외 |
@@ -138,7 +138,7 @@ export const config = { matcher: ["/admin/:path*"] };
 ### 3.3 `app/admin/layout.tsx` (스텁 교체)
 
 RSC. `createSessionClient()` → `getUser()`.
-- `user` 없음 → `<div className="min-h-full">{children}</div>` (로그인 페이지만 여기 도달). 미들웨어가 이미 막지만 방어.
+- `user` 없음 → `<div className="min-h-full">{children}</div>` (로그인 페이지만 여기 도달). 이 분기는 셸 분기용; 실 방어는 RLS + action 가드.
 - `user` 있음 → `<AdminShell userEmail={user.email}>{children}</AdminShell>`.
 
 `AdminShell`(`components/admin/admin-shell.tsx`) — 헤더: 좌측 "WEBAGENT.KR 관리자"(→ `/admin` 링크), 우측 `userEmail` + 로그아웃 버튼. 로그아웃은 클라이언트: `createBrowserSupabaseClient().auth.signOut()` → `router.replace('/admin/login'); router.refresh()`. 본문 `<main className="mx-auto max-w-[960px] px-5 py-8">{children}</main>`.
@@ -229,7 +229,7 @@ export async function updateConsultationMemo(id: string, memo: string):
 }
 ```
 
-- 세션 없는 상태에서 action 호출 시 세션 클라이언트가 익명 → RLS가 update를 0행 처리(에러 아님). 그래도 `updated_at` 트리거·`revalidate`만 도므로 안전. (미들웨어가 이미 페이지 진입을 막음 — action은 그 위 방어.)
+- 세션 없는 상태에서 action 호출 시: zod 검증 후 `supabase.auth.getUser()` 로 세션을 자체 확인하고, 없으면 `{ error }` 반환(Next 16 `proxy.md` 가 server action 자체 인증을 요구). 세션이 있어도 대상 행이 없으면(다른 ID·RLS 0행) `.select("id").maybeSingle()` 결과가 `null` → `{ error: "저장 대상을 찾지 못했습니다." }`. 0행을 성공으로 보고하지 않는다.
 - `updated_at`은 0001의 트리거가 자동 갱신.
 
 ### 4.5 `app/admin/diagnoses/[id]/page.tsx` (스텁 교체) — 진단 상세 (읽기 전용)

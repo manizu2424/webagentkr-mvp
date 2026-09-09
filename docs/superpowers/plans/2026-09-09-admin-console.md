@@ -400,8 +400,9 @@ const SRK = env.SUPABASE_SERVICE_ROLE_KEY;
 const H = { apikey: SRK, Authorization: `Bearer ${SRK}`, "Content-Type": "application/json" };
 
 // 1. 검증용 관리자
+// 실제 비번은 scratchpad/ (gitignore됨) 에만. 검증 후 대시보드에서 이 계정을 삭제할 것.
 const email = "verify-admin@webagent.test";
-const password = "Vrfy!admin-9271";
+const password = "<검증 스크립트가 생성 — 문서에 적지 않음>";
 const u = await fetch(`${SB}/auth/v1/admin/users`, {
   method: "POST", headers: H,
   body: JSON.stringify({ email, password, email_confirm: true }),
