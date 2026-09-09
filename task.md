@@ -105,8 +105,15 @@
 1. Supabase 프로젝트 생성(**리전: Seoul 권장** — 결함 #15) → 마이그레이션 SQL 을 대시보드 > SQL Editor 에 붙여넣어 순서대로 1회씩 실행. 실행 후 각 파일에 `[x]` 표시:
    - [x] `supabase/migrations/0001_init.sql` (2026-09-09 적용 확인 — 5테이블+RLS)
    - [x] `supabase/migrations/0002_diagnoses_idempotency.sql` (2026-09-09 적용 확인 — `diagnoses.idempotency_key` 존재). ~~없으면 모든 진단 제출 500~~
-   - ⚠️ 프로젝트 **리전 미기록** — Phase 4.7 `[리전 확정 필요]` (개인정보처리방침 국외이전 표)
-2. Supabase Auth **Email 가입 + 익명 로그인 모두 비활성화**, 관리자 계정 1개 수동 생성(+2FA 권장) — **묶음 B 선행(B1), 아직 미완**
+   - [x] 프로젝트 리전 = **Northeast Asia (Seoul) / `ap-northeast-2`** (2026-09-09 확인, 기획서 §15.2 권장대로).
+     데이터가 서울에 저장됨 → privacy 국외이전 표 Supabase 행: 국가 = 대한민국, 단 수탁자(Supabase Inc.) 본사는 미국 →
+     "국외 이전 해당 여부"는 변호사 검토 사항(Phase 4.7). `[리전 확정 필요]` placeholder 는 "대한민국(서울)" 로 교체 가능.
+2. Supabase Auth 비활성화 — **부분 완료 (2026-09-09 검증)**:
+   - [x] 익명 로그인 비활성화 확인 (`anonymous_provider_disabled`)
+   - [ ] **이메일 회원가입 비활성화 — 아직 켜져 있음** (검증 중 `POST /auth/v1/signup` 200, probe 유저 생성됨).
+     `Authentication → Sign In / Providers → "Allow new users to sign up"` OFF 필요. 결함 #5 상, 필수.
+   - [x] 관리자 계정 1개 존재 (`manizu2424@gmail.com`). (+2FA 권장 — 최소 admin UI 는 MFA 미구현, 후순위)
+   - ⚠️ 검증 중 생성된 probe auth 유저(`probe.*@gmail.com`) 1건 — 대시보드 `Authentication → Users` 에서 삭제 필요
 3. Telegram 봇 생성(BotFather) → 토큰/chat id — [x] `@webagentkrbot` + ADMIN chat id, `.env` 반영 (2026-09-09 확인)
 4. OpenAI API 키 발급
 5. `.env.example` → `.env` 채우기, `n8n.env` 별도 작성
@@ -213,15 +220,18 @@
 
 ### 묶음 A + Phase 2 — 실 DB 검증 (2026-09-09)
 
-사용자가 Supabase 프로젝트 생성(리전 미상 — Phase 4.7 `[리전 확정 필요]`) + `0001`·`0002` SQL 실행 + `.env`(Supabase 3키 + Telegram 3키, `N8N_WEBHOOK_URL` 공란) 완료. `npm run dev` 로 실 DB·실 Telegram 상대 검증. **26/26 pass.**
+사용자가 Supabase 프로젝트 생성(리전 = **서울 `ap-northeast-2`**) + `0001`·`0002` SQL 실행 + `.env`(Supabase 3키 + Telegram 3키, `N8N_WEBHOOK_URL` 공란) 완료. `npm run dev` 로 실 DB·실 Telegram 상대 검증. **26/26 pass.**
 
 - **셋업 사전확인**: 5테이블 존재 · `diagnoses.idempotency_key` 존재(0002) · anon 키로 `leads` 읽기 차단(RLS 정책 없음) · service-role 유효 · Telegram 봇 `@webagentkrbot` + `TELEGRAM_ADMIN_CHAT_ID` 유효(테스트 메시지 도달).
 - **셋업 함정**: `NEXT_PUBLIC_SUPABASE_URL` 에 처음 `.../rest/v1/` 가 붙어 모든 DB 호출이 `PGRST125` (경로 이중). Settings > API 의 **Project URL**(`https://<ref>.supabase.co`) 만 넣어야 함 — `.env.example` 에 주석 추가.
 - **Phase 2**: `POST /api/diagnoses` → `PROCESSING`(webhook skip) → `POST /api/dev/mock-result/<id>` → `GET` `COMPLETED` + result 6필드 + `diagnosis_results` 1행 / `?outcome=failed` → `FAILED` + 결과행 0 / 없는 uuid → `GET` 404 / 같은 `idempotencyKey` 재제출 → 같은 `diagnosisId` + `leads` 1행. 결과 페이지: 6카드·`FailedNotice`·`?_test_maxAttempts=2` timeout·notfound 뷰 전부 Playwright 렌더 확인.
 - **묶음 A**: `diagnosisId` 경로 → `consultations.lead_id == diagnoses.lead_id`(재사용), `status=NEW`, `suggested_service_type` 5종 CHECK 통과(픽스처+`websiteStatus=없음` → `Smart Website`) / 없는 uuid → 404 `diagnosis_not_found` / FAILED 진단(결과행 없음) → insert OK, 태그 `null` / 직접 경로 email upsert → 재제출 시 `leads` 1행 유지·마지막 쓰기 승·상담 2건 / 동의 누락 → 400 / 허니팟 → 200 무저장 / rate limit 6회째 429(스크립트 연속 호출로 확인, dev 재시작 시 Map 초기화도 확인). 폼 성공 화면 2 variant(프리필·직접) Playwright 확인.
-- **Telegram**: 전송 에러 로그 없음 + 봇/chat id 유효 확인 → `[신규 상담]` 도착 간주. **문구·PII 경계(이름·전화·이메일 미포함)는 사용자가 텔레그램에서 눈으로 최종 확인.**
-- **정리**: 검증 중 생성한 모든 행 삭제(`*@verify.test` 기준) — 5테이블 전부 0행 복귀. 프로덕션/실사용 데이터 아님.
-- 스크립트: `scratchpad/{check-supabase,verify,inspect,cleanup}.mjs` (일회성, 리포 밖).
+- **Telegram (dev 머신에서 검증 불가)**: 사용자 텔레그램에는 `curl` 테스트 메시지만 도착, 앱이 보낸 `[신규 상담]`·`[진단 실패]` 는 **미도착**.
+  원인 = 이 dev 머신의 **IPv6 라우팅 문제** — Node `fetch`(= `sendTelegram`)가 IPv6 주소 시도 후 IPv4 폴백 실패(`ETIMEDOUT`), `curl`/Node core `https` `family:4` 는 성공.
+  봇 토큰·chat id·메시지 형식은 `curl` 실전송으로 확인됨. **Contabo VPS(정상 네트워크)에서는 동작.** 문구·PII 경계는 그때 육안 확인.
+  → 부수 결함: `sendTelegram` 이 fetch throw 를 로그 없이 삼켜 실패가 안 보임 → **PR #6 (`fix/telegram-error-logging`)** 로 catch+`console.error` 추가.
+- **정리**: 검증 중 생성한 모든 DB 행 삭제(`*@verify.test` 기준) — 5테이블 전부 0행 복귀. 프로덕션/실사용 데이터 아님. (auth probe 유저는 삭제 권한 막혀 사용자 몫 — 위 "Phase 0 이후" 2번 참고)
+- 스크립트: `scratchpad/{check-supabase,verify,inspect,cleanup,auth-check}.mjs` 등 (일회성, 리포 밖).
 
 ### 묶음 C — 법적 고지  (A 다음)
 
@@ -329,7 +339,8 @@
 - [ ] 4.7 법적 페이지 `[확정 필요]` 채우기 (묶음 C 초안 → 실값) + **변호사·노무사 검토** — 출시 전 필수:
   - 사업자 정보: 상호 · 대표자 · 사업자등록번호 · 통신판매업신고번호 · 주소 · 이메일 (`site-footer.tsx` + privacy §12/§13)
   - 개인정보 보호책임자(성명·직책·이메일), 보유기간(진단·상담 / 자동 생성 정보)
-  - **Supabase 리전 확정** → privacy 국외이전 표 `[리전 확정 필요]` 반영 (리전 자체는 기획서 §15.2 "Seoul 권장")
+  - **Supabase 리전** = 서울 `ap-northeast-2` 확정(2026-09-09) → privacy 국외이전 표 `[리전 확정 필요]` 를 "대한민국(서울)" 로 교체 +
+    데이터는 국내 저장·수탁자 본사는 미국 → "국외 이전 해당 여부" 자체를 변호사가 판단(표에 남길지/위탁 표로 옮길지)
   - 시행일: 개인정보처리방침 · 이용약관 / 이용약관 관할 법원
 
 ---
