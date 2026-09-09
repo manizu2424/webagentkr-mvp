@@ -20,12 +20,16 @@ export function MemoEditor({
   const onSave = () => {
     setMsg(null);
     startTransition(async () => {
-      const r = await updateConsultationMemo(consultationId, value);
-      if ("error" in r) {
-        setMsg({ kind: "err", text: r.error });
-      } else {
-        setSaved(value);
-        setMsg({ kind: "ok", text: "저장됨" });
+      try {
+        const r = await updateConsultationMemo(consultationId, value);
+        if ("error" in r) {
+          setMsg({ kind: "err", text: r.error });
+        } else {
+          setSaved(value);
+          setMsg({ kind: "ok", text: "저장됨" });
+        }
+      } catch {
+        setMsg({ kind: "err", text: "저장에 실패했습니다. 새로고침 후 다시 시도해 주세요." });
       }
     });
   };

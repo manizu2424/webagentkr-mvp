@@ -29,12 +29,17 @@ export function StatusSelect({
     setValue(next);
     setMsg(null);
     startTransition(async () => {
-      const r = await updateConsultationStatus(consultationId, next);
-      if ("error" in r) {
+      try {
+        const r = await updateConsultationStatus(consultationId, next);
+        if ("error" in r) {
+          setValue(prev);
+          setMsg({ kind: "err", text: r.error });
+        } else {
+          setMsg({ kind: "ok", text: "저장됨" });
+        }
+      } catch {
         setValue(prev);
-        setMsg({ kind: "err", text: r.error });
-      } else {
-        setMsg({ kind: "ok", text: "저장됨" });
+        setMsg({ kind: "err", text: "저장에 실패했습니다. 새로고침 후 다시 시도해 주세요." });
       }
     });
   };

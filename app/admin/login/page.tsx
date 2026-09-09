@@ -15,17 +15,22 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const { error: authError } = await createBrowserSupabaseClient().auth.signInWithPassword({
-      email,
-      password,
-    });
-    setSubmitting(false);
-    if (authError) {
-      setError("이메일 또는 비밀번호가 올바르지 않습니다.");
-      return;
+    try {
+      const { error: authError } = await createBrowserSupabaseClient().auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (authError) {
+        setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+        return;
+      }
+      router.push("/admin");
+      router.refresh();
+    } catch {
+      setError("로그인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSubmitting(false);
     }
-    router.push("/admin");
-    router.refresh();
   };
 
   return (

@@ -15,7 +15,11 @@ export function AdminShell({
   const router = useRouter();
 
   const onLogout = async () => {
-    await createBrowserSupabaseClient().auth.signOut();
+    try {
+      await createBrowserSupabaseClient().auth.signOut();
+    } catch {
+      // 세션 소멸 실패해도 로그인 화면으로 보낸다.
+    }
     router.replace("/admin/login");
     router.refresh();
   };
