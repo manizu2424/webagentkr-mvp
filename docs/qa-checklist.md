@@ -268,4 +268,4 @@ D1~D3 메시지 본문에 이름/휴대폰/이메일이 한 글자도 없는지 
 ### 이번 실행에서 발견한 이슈
 
 1. ~~zod 오류 메시지 영문 노출~~ — **해결 (2026-09-09, `fix/validation-korean-messages`).** `lib/validation.ts` 의 `opt()` 헬퍼에 필드별 `SELECT_MSG` 맵 + `requiredText()` 헬퍼 도입. 누락(`undefined`)·빈값·잘못된 enum 값·형식 오류 모두 한글. 진단 14필드 + 상담 스키마 curl 검증, 진단 폼 1단계 Playwright 재확인.
-2. **DB 잔여 시드** — 묶음 B 관리자 콘솔 검증 시드(`admin-verify-A/B@webagent.test`, `검증상담_A/B`, 2026-09-09 03:41 생성)가 삭제되지 않고 남아 있음(leads 2 / diagnoses 1 / consultations 2). 실사용 데이터 아님 — 출시 전 삭제.
+2. ~~DB 잔여 시드~~ — **삭제 완료 (2026-09-09).** 묶음 B 관리자 콘솔 검증 시드(`admin-verify-A/B@webagent.test` + 자식 진단/결과/상담)를 service-role 스크립트로 제거. 5개 테이블 전부 0행(마이그레이션 직후 상태) 확인.
