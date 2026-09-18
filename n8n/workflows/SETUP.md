@@ -21,7 +21,7 @@ docker ps --filter name=n8n --format "{{.Names}}  {{.Image}}  {{.Ports}}"
 # n8n-v2  n8nio/n8n:2.12.2  0.0.0.0:8678->5678/tcp   → http://localhost:8678
 ```
 
-## 1. 자격증명 4개 생성 (n8n → Credentials → New)
+## 1. 자격증명 5개 생성 (n8n → Credentials → New)
 
 | 종류 | 이름(권장) | 값 |
 |---|---|---|
@@ -29,6 +29,9 @@ docker ps --filter name=n8n --format "{{.Names}}  {{.Image}}  {{.Ports}}"
 | **OpenAI** | `OpenAI` | API Key (결제 활성화된 계정) |
 | **Supabase API** | `WEBAGENT Supabase (service_role)` | Host = `https://<ref>.supabase.co` · Service Role Secret = `service_role` 키 |
 | **Telegram** | `WEBAGENT Telegram bot` | Access Token = `.env` 의 `TELEGRAM_BOT_TOKEN` |
+| **Header Auth** | `WEBAGENT Resend API` | Name = `Authorization` · Value = `Bearer <Resend API 키>` (task.md 4.1) |
+
+> **Resend 도메인 미인증 상태**: `webagent.kr` 을 Resend 에 도메인 추가 + DNS(SPF/DKIM) 인증 전에는 `onboarding@resend.dev` 발신 주소로 **Resend 가입 계정 본인 이메일에만** 발송 가능(샌드박스 정책). 인증 완료 전까지는 실제 고객에게 메일이 가지 않는다 — `Send email (Resend)` 노드의 `from` 값도 도메인 인증 후 `noreply@webagent.kr` 등으로 교체.
 
 ## 2. 환경변수 2개 (n8n 컨테이너)
 
@@ -120,10 +123,11 @@ n8n Executions 에서 실행을 열어 노드별 통과를 확인. `diagnoses.st
 | Webhook 이 401/403 | Header Auth credential 의 Name 이 정확히 `x-webhook-secret` 인지, Value 가 Next.js `N8N_WEBHOOK_SECRET` 과 같은지 확인 |
 | n8n 이 응답은 하는데 진단이 계속 "처리중" | Webhook `responseMode` 가 `onReceived` 인지 확인. Next.js 는 webhook 이 10초 안에 200 을 주길 기대하고, OpenAI 호출은 그보다 오래 걸림 — 즉시 응답 후 뒤에서 처리해야 함 |
 | 재실행 시 `23505` | `diagnosis_results.diagnosis_id` UNIQUE. 이미 결과가 있는 진단은 재처리 불가(정상). 테스트는 새 진단으로 |
+| 결과 이메일이 고객에게 안 감 | Resend 도메인 미인증이면 `onboarding@resend.dev` 발신은 **가입 계정 본인 이메일에만** 전달된다(정상 동작). `Send email (Resend)` 노드는 실패해도 `onError: continueRegularOutput` 이라 전체 실행은 성공으로 보임 — Executions 에서 해당 노드 출력을 따로 확인해야 함 |
 
 ## 설계 고정 사항 (바꾸지 말 것)
 
 - **서비스 유형 태깅 노드 없음** — 상담 신청 시 Next.js `lib/serviceTagging.ts` 가 담당 (결정 D3, 결함 #8).
 - **최상위 `difficulty` 없음** — `priorityTasks[].difficulty` 만 (`낮음/중간/높음`, 결정 D4).
-- **PII 안 받음** — Next.js `POST /api/diagnoses` 가 이름·전화·이메일을 이미 제거하고 보냄. 워크플로우/프롬프트에 PII 를 다시 넣지 말 것 (기획서 §16.1).
+- **PII 안 받음(webhook)** — Next.js `POST /api/diagnoses` 가 이름·전화·이메일을 이미 제거하고 보냄. **OpenAI 프롬프트(`Build request`)에는 절대 PII 를 넣지 말 것** (기획서 §16.1). 단, 4.1(결과 이메일) 부터 `Get diagnosis`→`Get lead` 노드가 발송 목적으로 `leads` 를 service-role 로 직접 조회해 email·이름을 가져온다 — 이 값은 `Build email`→`Send email (Resend)` 로만 흐르고 OpenAI 호출에는 재유입되지 않는다.
 - **AI 필드 ↔ DB 컬럼 매핑** — `README.md` 표. `Validate response` 노드가 이 매핑을 수행.
