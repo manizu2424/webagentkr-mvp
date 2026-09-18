@@ -31,7 +31,7 @@ docker ps --filter name=n8n --format "{{.Names}}  {{.Image}}  {{.Ports}}"
 | **Telegram** | `WEBAGENT Telegram bot` | Access Token = `.env` 의 `TELEGRAM_BOT_TOKEN` |
 | **Header Auth** | `WEBAGENT Resend API` | Name = `Authorization` · Value = `Bearer <Resend API 키>` (task.md 4.1) |
 
-> **Resend 도메인 미인증 상태**: `webagent.kr` 을 Resend 에 도메인 추가 + DNS(SPF/DKIM) 인증 전에는 `onboarding@resend.dev` 발신 주소로 **Resend 가입 계정 본인 이메일에만** 발송 가능(샌드박스 정책). 인증 완료 전까지는 실제 고객에게 메일이 가지 않는다 — `Send email (Resend)` 노드의 `from` 값도 도메인 인증 후 `noreply@webagent.kr` 등으로 교체.
+> **Resend 도메인 인증 완료 (2026-09-18)**: `webagent.kr` 이 Resend 에서 검증 완료(SPF/DKIM). `Send email (Resend)` 노드의 `from` 은 `"WEBAGENT.KR 진단결과" <noreply@webagent.kr>` 로 설정되어 있고, 실 도메인 발신 테스트 메일 수신 확인함. 더 이상 `onboarding@resend.dev` 샌드박스 제약 없음 — 모든 수신자에게 정상 발송.
 
 ## 2. 환경변수 2개 (n8n 컨테이너)
 
@@ -123,7 +123,7 @@ n8n Executions 에서 실행을 열어 노드별 통과를 확인. `diagnoses.st
 | Webhook 이 401/403 | Header Auth credential 의 Name 이 정확히 `x-webhook-secret` 인지, Value 가 Next.js `N8N_WEBHOOK_SECRET` 과 같은지 확인 |
 | n8n 이 응답은 하는데 진단이 계속 "처리중" | Webhook `responseMode` 가 `onReceived` 인지 확인. Next.js 는 webhook 이 10초 안에 200 을 주길 기대하고, OpenAI 호출은 그보다 오래 걸림 — 즉시 응답 후 뒤에서 처리해야 함 |
 | 재실행 시 `23505` | `diagnosis_results.diagnosis_id` UNIQUE. 이미 결과가 있는 진단은 재처리 불가(정상). 테스트는 새 진단으로 |
-| 결과 이메일이 고객에게 안 감 | Resend 도메인 미인증이면 `onboarding@resend.dev` 발신은 **가입 계정 본인 이메일에만** 전달된다(정상 동작). `Send email (Resend)` 노드는 실패해도 `onError: continueRegularOutput` 이라 전체 실행은 성공으로 보임 — Executions 에서 해당 노드 출력을 따로 확인해야 함 |
+| 결과 이메일이 고객에게 안 감 | `Send email (Resend)` 노드는 실패해도 `onError: continueRegularOutput` 이라 전체 실행은 성공으로 보임 — Executions 에서 해당 노드 출력을 따로 확인해야 함. 도메인은 이미 인증 완료 상태(2026-09-18) |
 
 ## 설계 고정 사항 (바꾸지 말 것)
 

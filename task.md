@@ -321,7 +321,8 @@
 
 - [~] **4.1 고객 결과 이메일 발송(Resend) — 최우선 순위 (2026-09-18 사용자 지정)**
   - **구현 완료 (2026-09-18)**: n8n `diagnosis-pipeline` 워크플로우에 `Mark COMPLETED` 뒤 병렬 브랜치로 `Get diagnosis`→`Get lead`(Supabase, service-role로 `leads` 직접 조회)→`Build email`(Code, 진단 요약+결과 링크 HTML 생성)→`Send email (Resend)`(HTTP Request, Header Auth `WEBAGENT Resend API`) 4노드 추가, Publish 완료. 실패해도 `onError: Continue`라 본 파이프라인(진단 완료 처리)엔 영향 없음.
-  - **미완료**: 실제 진단 제출 통한 end-to-end 테스트 아직 안 함(토큰 절약을 위해 이번 세션에서 생략). `webagent.kr` 도메인이 Resend에서 아직 DNS 인증 중이라, 인증 전까지는 `onboarding@resend.dev` 발신으로 **Resend 가입 계정 본인 이메일에만** 실제 도달(샌드박스 정책) — 인증 완료 후 발신 주소를 `noreply@webagent.kr` 등으로 교체 필요.
+  - **도메인 인증 완료 (2026-09-18)**: `webagent.kr` Resend 도메인 검증 완료(status: verified). 발신 주소를 `onboarding@resend.dev` → `"WEBAGENT.KR 진단결과" <noreply@webagent.kr>`로 교체 후 재게시, 실 도메인 발신 테스트 메일 수신 확인.
+  - **미완료**: 실제 진단 제출(폼 → n8n → Resend) 통한 end-to-end 테스트는 아직 안 함 — Resend API 직접 호출로만 발신 확인됨. 다음에 실제 진단 폼 제출로 전 구간 검증 필요.
 - [ ] 4.2 자동화 사례 상세 페이지
 - [ ] 4.3 MDX 블로그 3개(신뢰 자료 목적, 기획서 §13)
 - [x] 4.4 SEO 메타데이터, `sitemap`, `robots.txt`, Open Graph, Microsoft Clarity — 브랜치 `feat/seo` (2026-09-09, bounded).
