@@ -327,8 +327,15 @@
   (홈 JSON-LD Organization+WebSite) · per-user 결과/스텁/`/admin` noindex · Clarity 를 `analytics-consent.tsx` 동의 게이트에 배선
   (`NEXT_PUBLIC_CLARITY_PROJECT_ID`, 철회 시 `clarity("stop")`) · privacy §6·§7·§11 에 Microsoft(미국) 행 추가(초안 → 4.7 검토).
   `tsc`·`eslint`·`build` 0, curl/Playwright 검증. **`NEXT_PUBLIC_SITE_URL` 배포 시 설정 필요**(폴백 `https://webagent.kr`). 상세는 "4.4 이탈·메모".
-- [ ] 4.5 Contabo Docker 실제 배포 + **DB 백업 (D5: Free + cron `pg_dump` 일 1회, 7일 로테이션, 오프사이트 복사)** — P0 항목이므로 출시 전 완료 필요(결함 #14, #18)
-  - **복원 절차까지 실제로 검증**해야 완료 처리. 첫 계약 성사 시 Supabase Pro 전환.
+- [~] 4.5 Contabo Docker 실제 배포 + **DB 백업 (D5: Free + cron `pg_dump` 일 1회, 7일 로테이션, 오프사이트 복사)** — P0 항목이므로 출시 전 완료 필요(결함 #14, #18)
+  - **2026-09-18 배포 완료·검증.** Contabo Cloud VPS 4(4vCPU/8GB, Asia/Japan, Ubuntu 24.04, IP `84.247.155.90`) 구매 후 SSH 키 인증 전환(비밀번호 로그인 비활성화) → Docker 설치 → `ufw`(22/80/443만 허용) → `main`(7b86587) clone → `docker compose build && up -d`. NPM에서 `webagent.kr` 프록시 호스트 + Let's Encrypt 발급. `N8N_WEBHOOK_URL`은 Docker 내부망(`http://n8n:5678/...`)으로 설정해 n8n을 인터넷에 노출하지 않음(n8n 5678·NPM 관리 81 외부 접근 차단 확인).
+  - n8n에 `SETUP.md` 절차대로 credential 4종 생성 + 워크플로우 2개 import + Activate. 실 진단 제출 스모크 테스트: PROCESSING→COMPLETED 5.8초, GPT-4o 결과 정상 표시, n8n 실행 로그 전 노드 성공(Notify success 포함 — **로컬 PC의 IPv6 이슈로 미확인이던 Telegram 알림, VPS에서 최초 검증**). 상담 폼 제출·`/admin` 로그인 페이지도 정상.
+  - **빌드 갭 1건 수정**: `NEXT_PUBLIC_SITE_URL`/`NEXT_PUBLIC_CLARITY_PROJECT_ID`가 `.env.example`엔 있었지만 `Dockerfile`/`docker-compose.yml` build args에 빠져 있던 것 추가(PR #19).
+  - **DB 백업 완료·복원 검증 완료**: `/opt/backups/webagent/backup.sh`가 `postgres:17-alpine` 컨테이너(`--network host` — Supabase 직결 호스트가 IPv6 전용이라 Docker 기본 브리지로는 도달 불가)로 `pg_dump -Fc` 실행, 크론 등록(매일 18:00 UTC = 03:00 KST), 7일 로테이션. 수동 1회 실행 성공(368K) → 로컬 임시 컨테이너에 `pg_restore` → `leads`/`diagnoses`/`diagnosis_results`/`consultations` row count가 라이브 Supabase와 완전 일치 확인.
+  - **n8n·Portainer 공개 서브도메인화 완료** (2026-09-18, 같은 날 재시도). DNS 네거티브 캐시(SOA minimum 86400s) 해소 후 `https://n8n.webagent.kr`·`https://portainer.webagent.kr`에 Let's Encrypt 인증서 정상 발급, 각자 자체 로그인으로 보호. NPM 관리 화면(포트 81)만 여전히 SSH 터널 전용. 운영 절차는 `docs/인프라_배포_운영_가이드.md`(공개)·`docs/자격증명_비공개.md`(gitignore, 실값)로 문서화.
+  - **미완료**: 오프사이트 백업 복사(현재 VPS 로컬 디스크만 — 사용자 결정으로 다음 단계로 이연). 첫 계약 성사 시 Supabase Pro 전환은 미착수.
+  - **관리자 콘솔 라이브 확인** (2026-09-18): 배포 후 처음으로 `/admin`을 실사용 — 상담 목록/상세만 있고 진단 목록 페이지가 없어 사용자가 "휑하다"고 지적. 확인 결과 버그 아님, 묶음 B 원래 스코프(별도 API 없음, RLS 직접 조회)대로 최소 구성. 진단 목록 페이지·대시보드 확장 여부를 물었고 **사용자 결정: 지금은 그대로 두고 마케팅 리뉴얼(Task 6~) 재개 시 같이 검토**.
+  - **결과 이메일 미발송 + 재조회 불가 체감** (2026-09-18): 사용자가 실제로 진단을 제출해보고 이메일이 안 오고(4.1 Resend 미착수) 결과 페이지도 다시 못 찾는 문제를 발견. `/diagnosis/[id]` 는 URL을 알아야만 재접근 가능한 구조라 북마크 없이는 못 돌아감 — 이번엔 Claude 가 VPS 에서 service-role 키로 최근 진단을 직접 조회해 링크를 전달. 근본 해결은 4.1(이메일)이며, 그전까지는 결과 링크를 북마크하라고 안내 필요.
 - [~] 4.6 출시 전 QA 체크리스트(기획서 §17.2) → **`docs/qa-checklist.md`** 로 상세화 (브랜치 `feat/qa-checklist`, 2026-09-09).
   각 항목을 트리거 방법·절차·기대 결과·결과 기록란 + 환경 태그(`[로컬]`/`[로컬+DB]`/`[배포]`/`[배포+n8n]`/`[실기기]`)로 확장.
   A 퍼널 happy path·B 검증/스팸·C 실패 경로(결함 #1·#2 회귀 포함)·D Telegram·E 반응형·F 관리자·G SEO/분석.
@@ -433,6 +440,8 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-09: **zod 한글 메시지 수정** (`fix/validation-korean-messages`, 4.6 B5 후속). `lib/validation.ts` `opt()` 에 `SELECT_MSG` 필드별 맵 + `requiredText()` 헬퍼, `phone`/`email` constructor `error`. 진단 14필드 + 상담 스키마 누락·형식오류·enum오류 전부 한글화. Playwright(진단 폼 1단계) + curl 재검증 → B4·B5 PASS. Phase 1 이탈·메모의 미착수 항목 해소. `tsc`·`eslint`·`build` 0.
 - 2026-09-09: **Phase B n8n 워크플로우 초안** (`feat/n8n-workflows`). `n8n/workflows/diagnosis-pipeline.json`(10노드: Webhook→Code→OpenAI HTTP(gpt-4o, §7.3 strict)→Code 검증/매핑→IF→성공/실패 분기) + `error-trigger.json` + `SETUP.md`(credential 4개·env 2개·import·검증·흔한 조정). n8n 2.x 대상, 손으로 작성 — 인스턴스 import 후 조정·검증 남음. Mock(`mock-result`)은 `N8N_WEBHOOK_URL` 설정 전까지 계속 대역.
 - 2026-09-09: **Phase B 완료·검증** (PR #14). 로컬 실측(n8n 2.12.2 + gpt-4o + 실 Supabase 서울): 진단 제출 → `PROCESSING` → `COMPLETED` ~11초, `diagnosis_results` 6컬럼(jsonb·text[]) 정상, AI 결과가 입력값(업종·painPoint) 반영. 잡은 버그 2개 — `.env` `N8N_WEBHOOK_SECRET` 의 `#` 를 dotenv 가 절단(따옴표로 해결) / `Mark COMPLETED` 가 `Insert result` 뒤 `$json.diagnosisId` 유실로 no-op(`$('Validate response')` 참조로 수정). Telegram 은 개발 PC IPv6 이슈로 미도달 — 배포(4.5)에서 확인.
+- 2026-09-18: **Phase 4.5 Contabo 첫 실배포·백업/복원 검증** (PR #19 + VPS 상 인프라 작업, main `7b86587` 기준). 전체 내용은 4.5 항목 참조 — 요약: 실 도메인 HTTPS 서비스·n8n 실행 전 노드 성공(Telegram 최초 검증)·DB 백업 크론+복원 검증(row count 일치) 완료. 오프사이트 백업 복사·Portainer 공개 서브도메인 SSL(DNS 네거티브 캐시로 보류)·Supabase Pro 전환은 다음 단계. **재배포**: VPS `/opt/webagent/app`에서 `git pull && docker compose up -d --build`.
+- 2026-09-18: **n8n·Portainer 공개 서브도메인화 완료 + 배포 후 첫 실사용 점검**. DNS 캐시 해소 후 `n8n.webagent.kr`·`portainer.webagent.kr` SSL 발급 성공(운영 가이드 `docs/인프라_배포_운영_가이드.md` 갱신·커밋). 사용자가 `/admin`·진단 폼을 실제로 써보며 갭 2건 확인: (1) 관리자 콘솔이 상담 전용이라 휑함 — 의도된 스코프, 확장은 보류(사용자 결정). (2) 결과 이메일 미발송(4.1 미착수) + 결과 페이지 재조회 수단 없음 — 근본 해결은 4.1, 그전엔 링크 북마크 안내 또는 DB 직접 조회로 링크 재전달. PR #19 는 아직 미머지.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.

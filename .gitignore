@@ -36,6 +36,9 @@ n8n.env
 !.env.example
 !n8n.env.example
 
+# 배포 자격증명(비밀번호 등 실값 포함) — 절대 커밋 금지
+docs/자격증명*.md
+
 # vercel
 .vercel
 
