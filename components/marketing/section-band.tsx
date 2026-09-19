@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-const SURFACE: Record<"paper" | "panel" | "tint", string> = {
+const SURFACE: Record<"paper" | "panel" | "tint" | "deep", string> = {
   paper: "bg-paper",
   panel: "bg-panel",
   tint: "bg-tint",
+  deep: "wak-on-deep bg-deep",
 };
 
 export function SectionBand({
@@ -19,7 +20,7 @@ export function SectionBand({
   children,
 }: {
   id?: string;
-  surface?: "paper" | "panel" | "tint";
+  surface?: "paper" | "panel" | "tint" | "deep";
   eyebrow: string;
   index?: number;
   heading: string;

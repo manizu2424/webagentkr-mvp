@@ -92,7 +92,7 @@ export function HeroFlow() {
           width={140}
           height={44}
           rx={3}
-          fill="rgb(31 60 230 / 0.06)"
+          fill="color-mix(in srgb, var(--wak-signal) 14%, transparent)"
           stroke="var(--wak-signal)"
           strokeWidth={1.5}
         />
@@ -116,7 +116,7 @@ export function HeroFlow() {
               width={92}
               height={44}
               rx={3}
-              fill="rgb(12 139 119 / 0.06)"
+              fill="color-mix(in srgb, var(--wak-resolved) 14%, transparent)"
               stroke="var(--wak-resolved)"
               strokeWidth={1}
             />
