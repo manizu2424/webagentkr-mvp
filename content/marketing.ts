@@ -192,25 +192,7 @@ export const FINAL_CTA = {
   note: "무료 · 가입 없음",
 } as const;
 
-// ── 아래 3개는 소비 컴포넌트와 함께 후속 태스크에서 삭제된다 (PROBLEMS·BEFORE_AFTER: Task 4, TRUST: Task 6) ──
-
-export const PROBLEMS = [
-  { label: "문의 수동 확인", icon: "inbox" as IconName },
-  { label: "엑셀 재입력", icon: "sheet" as IconName },
-  { label: "견적서 매번 재작성", icon: "file-text" as IconName },
-  { label: "상담 수기 정리", icon: "clipboard-list" as IconName },
-  { label: "블로그·SNS 직접 제작", icon: "pen-line" as IconName },
-  { label: "보고서 복사·작성", icon: "bar-chart" as IconName },
-] as const;
-
-export const BEFORE_AFTER = [
-  { task: "고객 문의", before: "이메일 수동 확인", after: "접수 즉시 저장·알림" },
-  { task: "고객 관리", before: "엑셀 수기 입력", after: "CRM 자동 등록" },
-  { task: "견적 작성", before: "양식 복사·수정", after: "AI 초안 생성" },
-  { task: "상담 정리", before: "직원 수기 작성", after: "AI 자동 요약" },
-  { task: "블로그", before: "조사부터 직접 수행", after: "자료·초안 자동 생성" },
-  { task: "보고서", before: "자료 복사 후 작성", after: "지정 양식 자동 생성" },
-] as const;
+// ── 아래 TRUST 는 소비 컴포넌트와 함께 Task 6 에서 삭제된다 ──
 
 export const TRUST = [
   {

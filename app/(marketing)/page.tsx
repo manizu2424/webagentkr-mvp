@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/marketing/hero";
-import { Problems } from "@/components/marketing/problems";
-import { BeforeAfter } from "@/components/marketing/before-after";
+import { Pain } from "@/components/marketing/pain";
 import { Services } from "@/components/marketing/services";
 import { Demos } from "@/components/marketing/demos";
 import { MidCta, FinalCta } from "@/components/marketing/cta-band";
@@ -56,8 +55,7 @@ export default function Home() {
       />
 
       <Hero />
-      <Problems />
-      <BeforeAfter />
+      <Pain />
       <Services />
       <Demos />
       <MidCta />
