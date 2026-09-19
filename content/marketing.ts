@@ -192,26 +192,6 @@ export const FINAL_CTA = {
   note: "무료 · 가입 없음",
 } as const;
 
-// ── 아래 TRUST 는 소비 컴포넌트와 함께 Task 6 에서 삭제된다 ──
-
-export const TRUST = [
-  {
-    point: "고정 기술 스택 공개",
-    icon: "layers" as IconName,
-    body: "Next.js · Supabase · n8n · OpenAI · Telegram 으로 고정합니다. 어떤 도구로 무엇을 하는지 처음부터 공개합니다.",
-  },
-  {
-    point: "구축 과정 투명 공유",
-    icon: "eye" as IconName,
-    body: "진단부터 이관까지 각 단계의 산출물(제안서·워크플로우·문서)을 그대로 전달합니다. 블랙박스가 없습니다.",
-  },
-  {
-    point: "데모 재현 가능",
-    icon: "refresh-cw" as IconName,
-    body: "홈페이지의 자동화 데모는 실제 동작하는 흐름입니다. 상담 시 같은 구성을 직접 시연합니다.",
-  },
-] as const;
-
 export const ABOUT = {
   mission:
     "WEBAGENT.KR 은 중소기업이 반복 업무를 사람 대신 AI와 자동화에 맡기도록 돕습니다. 고객 문의·견적·보고서·콘텐츠 제작처럼 매일 반복되는 일을 n8n 워크플로우와 AI 호출로 연결해, 직원이 판단이 필요한 일에 집중할 수 있게 만듭니다.",
