@@ -1,26 +1,38 @@
-import { Section } from "@/components/marketing/section";
+import { ArrowRight } from "lucide-react";
+import { SectionBand } from "@/components/marketing/section-band";
+import { Icon } from "@/components/marketing/icons";
+import { PROCESS, SECTIONS } from "@/content/marketing";
 
-// 구축 절차 — 진짜 순서라 번호 사용. 단계 라벨은 기획서 §6 여정에서 유추,
-// 각 단계 설명 문구는 확정 전.
-const STEPS = ["자동화 진단", "설계·제안", "구축·연동", "검수·이관", "운영 지원"];
-
+// 진행 방식 — 진짜 순서라 번호 사용. 3단계 (진단 → 제안 → 구축).
 export function Process() {
+  const s = SECTIONS.process;
   return (
-    <Section heading="구축 절차" wide>
-      <ol className="grid gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
-        {STEPS.map((step, i) => (
-          <li key={step} className="border-t-2 border-ink pt-3">
-            <span className="font-flow text-[0.8rem] text-signal">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <p className="mt-1.5 text-[1rem] font-bold text-ink">{step}</p>
-            <p className="mt-2 text-[0.88rem] leading-relaxed text-ink-soft">
-              {/* TODO: 단계 설명 카피 확정 */}
-              단계 설명이 들어갑니다.
-            </p>
+    <SectionBand surface="panel" eyebrow={s.eyebrow} heading={s.heading} lead={s.lead} wide>
+      <ol className="grid gap-6 md:grid-cols-3">
+        {PROCESS.map((p, i) => (
+          <li
+            key={p.step}
+            className="relative rounded-lg border border-line bg-paper p-6"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-flow text-[0.8rem] text-signal">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <Icon name={p.icon} />
+            </div>
+            <p className="mt-4 text-[1.1rem] font-bold text-ink">{p.step}</p>
+            <p className="mt-2 text-[0.95rem] leading-[1.75] text-ink-soft">{p.desc}</p>
+            {i < PROCESS.length - 1 && (
+              <ArrowRight
+                aria-hidden
+                size={18}
+                strokeWidth={1.75}
+                className="absolute top-1/2 -right-[1.2rem] hidden -translate-y-1/2 text-ink-soft md:block"
+              />
+            )}
           </li>
         ))}
       </ol>
-    </Section>
+    </SectionBand>
   );
 }
