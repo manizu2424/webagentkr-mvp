@@ -319,7 +319,9 @@
 
 ## Phase 4 — 지속 (P1): 출시 마무리
 
-- [~] **4.1 고객 결과 이메일 발송(Resend) — 최우선 순위 (2026-09-18 사용자 지정)**
+- [x] **4.1 고객 결과 이메일 발송(Resend) — 최우선 순위 (2026-09-18 사용자 지정) — end-to-end 검증 완료 (2026-09-20)**
+  - **E2E 검증 (2026-09-20)**: 실 폼 제출(`joyban@naver.com`) → 첫 시도 메일 미수신. 원인 = n8n `Send email (Resend)` 노드 JSON Body 필드 맨 앞에 `=`가 중복 입력되어 `The value in the "JSON Body" field is not valid JSON` (Resend 요청 자체가 안 나가 Logs에도 흔적 없음. `onError: Continue`라 실행은 "성공"으로 표시되어 조용히 실패). n8n에서 앞의 `=` 제거 → Save·Publish → 재제출 → 네이버 수신 확인.
+  - **후속(미착수)**: 저장소 `n8n/workflows/diagnosis-pipeline.json` 발신 주소가 아직 `onboarding@resend.dev` — n8n에서 Download한 JSON으로 동기화 필요. 이메일 노드 실패 시 Telegram `[메일 발송 실패]` 알림 분기 추가 여부 결정 필요(조용한 실패 방지).
   - **구현 완료 (2026-09-18)**: n8n `diagnosis-pipeline` 워크플로우에 `Mark COMPLETED` 뒤 병렬 브랜치로 `Get diagnosis`→`Get lead`(Supabase, service-role로 `leads` 직접 조회)→`Build email`(Code, 진단 요약+결과 링크 HTML 생성)→`Send email (Resend)`(HTTP Request, Header Auth `WEBAGENT Resend API`) 4노드 추가, Publish 완료. 실패해도 `onError: Continue`라 본 파이프라인(진단 완료 처리)엔 영향 없음.
   - **도메인 인증 완료 (2026-09-18)**: `webagent.kr` Resend 도메인 검증 완료(status: verified). 발신 주소를 `onboarding@resend.dev` → `"WEBAGENT.KR 진단결과" <noreply@webagent.kr>`로 교체 후 재게시, 실 도메인 발신 테스트 메일 수신 확인.
   - **미완료**: 실제 진단 제출(폼 → n8n → Resend) 통한 end-to-end 테스트는 아직 안 함 — Resend API 직접 호출로만 발신 확인됨. 다음에 실제 진단 폼 제출로 전 구간 검증 필요.
@@ -347,6 +349,7 @@
     - ~~B5 FAIL — 진단 폼 필수값 미입력 시 영문 zod 메시지~~ → **해결** (`fix/validation-korean-messages`, 2026-09-09). `lib/validation.ts` `opt()` 에 `SELECT_MSG` 맵 + `requiredText()` 헬퍼. 재검증 후 B4·B5 PASS.
     - ⚠️ DB 잔여 시드 발견 — 묶음 B 검증 시드(`admin-verify-A/B@webagent.test`, 03:41 생성)가 미삭제. 출시 전 정리.
   - 나머지(모바일 실기기·Telegram 3종·프록시 IP·관리자·SEO 라이브)는 배포 후 문서 따라 실행.
+- [x] **4.8 결과 PDF 저장** — 브랜치 `feat/result-pdf` (2026-09-20). `GET /api/diagnoses/[id]/pdf`(서버 생성, `@react-pdf/renderer` + Noto Sans KR, standalone 트레이싱) + 결과 화면 "결과 PDF로 저장" 버튼 + GA4 `result_pdf_download`. PII 없음·추정치 고지·IP당 시간당 20건. 스펙 `docs/superpowers/specs/2026-09-20-marketing-renewal-and-result-pdf-design.md`, 계획 `docs/superpowers/plans/2026-09-20-result-pdf.md`.
 - [ ] 4.7 법적 페이지 `[확정 필요]` 채우기 (묶음 C 초안 → 실값) + **변호사·노무사 검토** — 출시 전 필수:
   - 사업자 정보: 상호 · 대표자 · 사업자등록번호 · 통신판매업신고번호 · 주소 · 이메일 (`site-footer.tsx` + privacy §12/§13)
   - 개인정보 보호책임자(성명·직책·이메일), 보유기간(진단·상담 / 자동 생성 정보)
@@ -446,6 +449,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-09: **Phase B 완료·검증** (PR #14). 로컬 실측(n8n 2.12.2 + gpt-4o + 실 Supabase 서울): 진단 제출 → `PROCESSING` → `COMPLETED` ~11초, `diagnosis_results` 6컬럼(jsonb·text[]) 정상, AI 결과가 입력값(업종·painPoint) 반영. 잡은 버그 2개 — `.env` `N8N_WEBHOOK_SECRET` 의 `#` 를 dotenv 가 절단(따옴표로 해결) / `Mark COMPLETED` 가 `Insert result` 뒤 `$json.diagnosisId` 유실로 no-op(`$('Validate response')` 참조로 수정). Telegram 은 개발 PC IPv6 이슈로 미도달 — 배포(4.5)에서 확인.
 - 2026-09-18: **Phase 4.5 Contabo 첫 실배포·백업/복원 검증** (PR #19 + VPS 상 인프라 작업, main `7b86587` 기준). 전체 내용은 4.5 항목 참조 — 요약: 실 도메인 HTTPS 서비스·n8n 실행 전 노드 성공(Telegram 최초 검증)·DB 백업 크론+복원 검증(row count 일치) 완료. 오프사이트 백업 복사·Portainer 공개 서브도메인 SSL(DNS 네거티브 캐시로 보류)·Supabase Pro 전환은 다음 단계. **재배포**: VPS `/opt/webagent/app`에서 `git pull && docker compose up -d --build`.
 - 2026-09-18: **n8n·Portainer 공개 서브도메인화 완료 + 배포 후 첫 실사용 점검**. DNS 캐시 해소 후 `n8n.webagent.kr`·`portainer.webagent.kr` SSL 발급 성공(운영 가이드 `docs/인프라_배포_운영_가이드.md` 갱신·커밋). 사용자가 `/admin`·진단 폼을 실제로 써보며 갭 2건 확인: (1) 관리자 콘솔이 상담 전용이라 휑함 — 의도된 스코프, 확장은 보류(사용자 결정). (2) 결과 이메일 미발송(4.1 미착수) + 결과 페이지 재조회 수단 없음 — 근본 해결은 4.1, 그전엔 링크 북마크 안내 또는 DB 직접 조회로 링크 재전달. PR #19 는 아직 미머지.
+- 2026-09-20: **결과 PDF 저장 구현** (`feat/result-pdf`). 서버 생성 PDF(한글 폰트 포함) + 결과 화면 저장 버튼. 검증 결과는 PR 본문 참조.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.
