@@ -324,7 +324,7 @@
   - **후속(미착수)**: 저장소 `n8n/workflows/diagnosis-pipeline.json` 발신 주소가 아직 `onboarding@resend.dev` — n8n에서 Download한 JSON으로 동기화 필요. 이메일 노드 실패 시 Telegram `[메일 발송 실패]` 알림 분기 추가 여부 결정 필요(조용한 실패 방지).
   - **구현 완료 (2026-09-18)**: n8n `diagnosis-pipeline` 워크플로우에 `Mark COMPLETED` 뒤 병렬 브랜치로 `Get diagnosis`→`Get lead`(Supabase, service-role로 `leads` 직접 조회)→`Build email`(Code, 진단 요약+결과 링크 HTML 생성)→`Send email (Resend)`(HTTP Request, Header Auth `WEBAGENT Resend API`) 4노드 추가, Publish 완료. 실패해도 `onError: Continue`라 본 파이프라인(진단 완료 처리)엔 영향 없음.
   - **도메인 인증 완료 (2026-09-18)**: `webagent.kr` Resend 도메인 검증 완료(status: verified). 발신 주소를 `onboarding@resend.dev` → `"WEBAGENT.KR 진단결과" <noreply@webagent.kr>`로 교체 후 재게시, 실 도메인 발신 테스트 메일 수신 확인.
-  - **미완료**: 실제 진단 제출(폼 → n8n → Resend) 통한 end-to-end 테스트는 아직 안 함 — Resend API 직접 호출로만 발신 확인됨. 다음에 실제 진단 폼 제출로 전 구간 검증 필요.
+  - ~~**미완료**: 실제 진단 제출(폼 → n8n → Resend) 통한 end-to-end 테스트는 아직 안 함 — Resend API 직접 호출로만 발신 확인됨. 다음에 실제 진단 폼 제출로 전 구간 검증 필요.~~ → **해결 (2026-09-20)**: 위 E2E 검증 참조
 - [ ] 4.2 자동화 사례 상세 페이지
 - [ ] 4.3 MDX 블로그 3개(신뢰 자료 목적, 기획서 §13)
 - [x] 4.4 SEO 메타데이터, `sitemap`, `robots.txt`, Open Graph, Microsoft Clarity — 브랜치 `feat/seo` (2026-09-09, bounded).

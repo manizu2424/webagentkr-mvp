@@ -98,8 +98,8 @@ export function DiagnosisPdf({ result, diagnosedOn, resultUrl }: DiagnosisPdfPro
         )}
 
         {result.summary.length > 0 && (
-          <View style={s.section} wrap={false}>
-            <Text style={s.h2}>요약</Text>
+          <View style={s.section}>
+            <Text style={s.h2} minPresenceAhead={40}>요약</Text>
             <Text>{result.summary}</Text>
           </View>
         )}
