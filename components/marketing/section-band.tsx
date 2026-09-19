@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+// deep: 히어로·마지막 CTA는 밴드 규격(헤딩/리드 구조)을 벗어나 wak-on-deep bg-deep 을 직접 붙인다. 밴드 형태의 어두운 섹션이 필요할 때 쓴다.
 const SURFACE: Record<"paper" | "panel" | "tint" | "deep", string> = {
   paper: "bg-paper",
   panel: "bg-panel",
@@ -31,7 +32,7 @@ export function SectionBand({
 }) {
   const HeadingTag = headingAs;
   return (
-    <section id={id} className={cn("w-full", SURFACE[surface])}>
+    <section id={id} className={cn("w-full scroll-mt-20", SURFACE[surface])}>
       <div className="mx-auto max-w-[1120px] px-5 py-16 sm:px-8 lg:py-20">
         <p className="flex items-center gap-2 font-flow text-[0.75rem] tracking-[0.04em] text-signal">
           {typeof index === "number" && (

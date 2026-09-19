@@ -7,7 +7,7 @@ import { pageMetadata } from "@/lib/siteMeta";
 export const metadata: Metadata = pageMetadata({
   title: "회사소개",
   description:
-    "WEBAGENT.KR 은 중소기업의 반복 업무를 AI와 자동화로 대신하도록 돕습니다.",
+    "WEBAGENT.KR은 중소기업의 반복 업무를 AI와 자동화로 대신하도록 돕는 곳이에요.",
   path: "/about",
 });
 

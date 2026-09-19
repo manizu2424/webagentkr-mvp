@@ -93,7 +93,7 @@
 .wak-on-deep {
   --wak-ink: #f5f6f2;
   --wak-ink-soft: #b8c9c8;
-  --wak-line: rgb(255 255 255 / 0.2);
+  --wak-line: rgb(255 255 255 / 0.34);
   --wak-panel: rgb(255 255 255 / 0.06);
   --wak-signal: #8ea0ff;
   --wak-resolved: #7fe0cf;
