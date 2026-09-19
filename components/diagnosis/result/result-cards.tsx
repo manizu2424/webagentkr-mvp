@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { track } from "@/lib/analytics";
 import type { DiagnosisApiResult } from "@/lib/diagnosisResult";
 import { ScoreCard } from "./score-card";
@@ -27,6 +28,15 @@ export function ResultCards({
           아래 수치는 입력하신 정보를 바탕으로 AI가 계산한{" "}
           <strong className="font-semibold text-ink">추정치</strong>입니다. 실제 결과는 상담을 통해 구체화됩니다.
         </p>
+        <a
+          href={`/api/diagnoses/${diagnosisId}/pdf`}
+          download
+          onClick={() => track("result_pdf_download", { from: "result" })}
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-line bg-panel px-4 py-2.5 text-[0.9rem] leading-none font-medium text-ink transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal motion-reduce:transition-none"
+        >
+          <Download aria-hidden className="size-4" />
+          결과 PDF로 저장
+        </a>
       </div>
       <ScoreCard score={result.automationScore} />
       <SavedHoursCard hours={result.totalEstimatedSavedHours} />
