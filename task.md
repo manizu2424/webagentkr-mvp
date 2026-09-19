@@ -347,6 +347,7 @@
     - ~~B5 FAIL — 진단 폼 필수값 미입력 시 영문 zod 메시지~~ → **해결** (`fix/validation-korean-messages`, 2026-09-09). `lib/validation.ts` `opt()` 에 `SELECT_MSG` 맵 + `requiredText()` 헬퍼. 재검증 후 B4·B5 PASS.
     - ⚠️ DB 잔여 시드 발견 — 묶음 B 검증 시드(`admin-verify-A/B@webagent.test`, 03:41 생성)가 미삭제. 출시 전 정리.
   - 나머지(모바일 실기기·Telegram 3종·프록시 IP·관리자·SEO 라이브)는 배포 후 문서 따라 실행.
+- [x] **4.9 마케팅 개편** — 브랜치 `feat/marketing-redesign` (2026-09-20). 딥 잉크 히어로 + 밝은 본문(어두운 표면은 `.wak-on-deep` 토큰 스코프), 랜딩 **7섹션**(히어로/고민/서비스/진행 방식/데모/FAQ/마지막 CTA), 카피를 쉬운 말로 재작성(`content/marketing.ts` 단일 소스), 자동화 사례 메뉴를 `CASES_ENABLED`(`lib/features.ts`) 플래그로 숨김(네비·사이트맵·`/cases` 404), 회사소개 페이지 구현. 스펙 `docs/superpowers/specs/2026-09-20-marketing-renewal-and-result-pdf-design.md` §X, 계획 `docs/superpowers/plans/2026-09-20-marketing-renewal.md`.
 - [ ] 4.7 법적 페이지 `[확정 필요]` 채우기 (묶음 C 초안 → 실값) + **변호사·노무사 검토** — 출시 전 필수:
   - 사업자 정보: 상호 · 대표자 · 사업자등록번호 · 통신판매업신고번호 · 주소 · 이메일 (`site-footer.tsx` + privacy §12/§13)
   - 개인정보 보호책임자(성명·직책·이메일), 보유기간(진단·상담 / 자동 생성 정보)
@@ -446,6 +447,7 @@ PDF 보고서·공유 링크, 상담 일정 예약, 고객 계정·포털, 결�
 - 2026-09-09: **Phase B 완료·검증** (PR #14). 로컬 실측(n8n 2.12.2 + gpt-4o + 실 Supabase 서울): 진단 제출 → `PROCESSING` → `COMPLETED` ~11초, `diagnosis_results` 6컬럼(jsonb·text[]) 정상, AI 결과가 입력값(업종·painPoint) 반영. 잡은 버그 2개 — `.env` `N8N_WEBHOOK_SECRET` 의 `#` 를 dotenv 가 절단(따옴표로 해결) / `Mark COMPLETED` 가 `Insert result` 뒤 `$json.diagnosisId` 유실로 no-op(`$('Validate response')` 참조로 수정). Telegram 은 개발 PC IPv6 이슈로 미도달 — 배포(4.5)에서 확인.
 - 2026-09-18: **Phase 4.5 Contabo 첫 실배포·백업/복원 검증** (PR #19 + VPS 상 인프라 작업, main `7b86587` 기준). 전체 내용은 4.5 항목 참조 — 요약: 실 도메인 HTTPS 서비스·n8n 실행 전 노드 성공(Telegram 최초 검증)·DB 백업 크론+복원 검증(row count 일치) 완료. 오프사이트 백업 복사·Portainer 공개 서브도메인 SSL(DNS 네거티브 캐시로 보류)·Supabase Pro 전환은 다음 단계. **재배포**: VPS `/opt/webagent/app`에서 `git pull && docker compose up -d --build`.
 - 2026-09-18: **n8n·Portainer 공개 서브도메인화 완료 + 배포 후 첫 실사용 점검**. DNS 캐시 해소 후 `n8n.webagent.kr`·`portainer.webagent.kr` SSL 발급 성공(운영 가이드 `docs/인프라_배포_운영_가이드.md` 갱신·커밋). 사용자가 `/admin`·진단 폼을 실제로 써보며 갭 2건 확인: (1) 관리자 콘솔이 상담 전용이라 휑함 — 의도된 스코프, 확장은 보류(사용자 결정). (2) 결과 이메일 미발송(4.1 미착수) + 결과 페이지 재조회 수단 없음 — 근본 해결은 4.1, 그전엔 링크 북마크 안내 또는 DB 직접 조회로 링크 재전달. PR #19 는 아직 미머지.
+- 2026-09-20: **마케팅 개편 구현** (`feat/marketing-redesign`). 딥 잉크 히어로·7섹션·쉬운 카피·사례 메뉴 플래그·회사소개. 실제 사례가 생기면 `lib/features.ts` 의 `CASES_ENABLED` 를 true 로.
 
 ### Phase 0 이탈·메모
 - **Next 16** (계획은 15 가정). CNA가 `AGENTS.md`(Next 자동 생성, `next dev`가 재작성)를 만들며 `CLAUDE.md`를 `@AGENTS.md` 스텁으로 덮어써서 한글 `CLAUDE.md`를 복구하고 끝에 `@AGENTS.md` 임포트를 추가함.

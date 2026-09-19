@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/siteMeta";
+import { CASES_ENABLED } from "@/lib/features";
 
 /**
- * 색인 대상 공개 라우트만. 제외: 스텁(`/about`·`/cases` — Phase 4.2), per-user 결과
- * (`/diagnosis/[id]`), 관리자(`/admin/*`), API. `/cases` 는 4.2 구현 후 추가한다.
+ * 색인 대상 공개 라우트만. 제외: per-user 결과(/diagnosis/[id]), 관리자(/admin/*), API. /cases 는 CASES_ENABLED 가 켜졌을 때만 포함된다.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -16,11 +16,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${SITE_URL}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${SITE_URL}/consultation`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    ...(CASES_ENABLED
+      ? [
+          {
+            url: `${SITE_URL}/cases`,
+            lastModified: now,
+            changeFrequency: "monthly" as const,
+            priority: 0.7,
+          },
+        ]
+      : []),
     {
       url: `${SITE_URL}/privacy`,
       lastModified: now,

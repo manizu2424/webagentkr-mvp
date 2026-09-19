@@ -18,7 +18,7 @@ const PRETENDARD_CSS =
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div
-      className={`${plexMono.variable} font-display flex min-h-full flex-col bg-paper text-ink`}
+      className={`${plexMono.variable} font-display flex min-h-full flex-col bg-paper text-ink break-keep`}
     >
       <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
       <link rel="stylesheet" href={PRETENDARD_CSS} />

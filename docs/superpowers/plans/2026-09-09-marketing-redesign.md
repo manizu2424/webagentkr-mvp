@@ -1,5 +1,7 @@
 # 마케팅 페이지 리디자인 Implementation Plan
 
+> **대체됨 (2026-09-20):** 이 계획은 `2026-09-20-marketing-renewal.md` 로 대체되었다(라이트 전용·10섹션 전제 폐기 → 딥 잉크 히어로·7섹션).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 랜딩을 포함한 모든 마케팅 페이지에 섹션 밴드 시스템 · 라인 아이콘 · 커스텀 SVG 일러스트를 넣어 "밋밋하고 한눈에 안 들어온다"는 문제를 해결한다.

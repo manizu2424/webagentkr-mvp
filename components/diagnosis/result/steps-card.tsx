@@ -1,4 +1,4 @@
-// 실제 순서가 있는 유일한 목록 → 랜딩 flow-diagram·wizard-progress 와 같은 파이프라인으로 그린다.
+// 실제 순서가 있는 유일한 목록 → 히어로 흐름도(hero-flow)·wizard-progress 와 같은 파이프라인으로 그린다.
 // 헤어라인 커넥터 위의 마름모 노드가 순서를 나타내므로 별도 번호는 붙이지 않는다
 // (문구 자체가 "1주차:"처럼 차수를 담고 있어 이중 번호가 된다). 순서 의미는 <ol> 이 유지한다.
 export function StepsCard({ steps }: { steps: string[] }) {

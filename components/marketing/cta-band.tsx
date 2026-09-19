@@ -1,42 +1,24 @@
 import { CtaLink } from "@/components/marketing/cta-link";
+import { FINAL_CTA } from "@/content/marketing";
 
-// 중간 넛지(plain) — 페이지 흐름을 끊지 않는 조용한 밴드.
-export function MidCta() {
-  return (
-    <section className="relative border-y border-line py-12">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[1.1rem] font-semibold text-ink">
-          3분이면 우리 회사의 자동화 여지를 확인할 수 있습니다.
-        </p>
-        <CtaLink href="/diagnosis">무료 자동화 진단</CtaLink>
-      </div>
-    </section>
-  );
-}
-
-// 최종 클로즈(solid) — 스파인이 끝나는 "출력" 노드.
+// 마지막 CTA — 히어로와 짝을 이루는 딥 잉크 밴드. (중간 CTA 는 없앴다.)
 export function FinalCta() {
   return (
-    <section className="relative py-12 lg:py-16">
-      <span
+    <section className="wak-on-deep relative w-full overflow-hidden bg-deep">
+      <div
         aria-hidden
-        className="absolute top-[2.6rem] -left-[2.4rem] hidden size-3 -translate-x-px rotate-45 bg-signal ring-4 ring-paper lg:block"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(560px_260px_at_18%_100%,rgb(12_139_119/0.30),transparent_70%)]"
       />
-      <div className="bg-ink px-6 py-14 text-paper sm:px-12">
-        <p className="text-[1.5rem] font-extrabold tracking-tight sm:text-[1.8rem]">
-          AI로 일하는 회사를 만듭니다.
+      <div className="relative mx-auto max-w-[1120px] px-5 py-20 sm:px-8 lg:py-24">
+        <h2 className="max-w-[30rem] text-[1.8rem] leading-tight font-extrabold tracking-tight text-balance text-ink sm:text-[2.2rem]">
+          {FINAL_CTA.heading}
+        </h2>
+        <p className="mt-4 max-w-[32rem] text-[1rem] leading-[1.75] text-ink-soft">
+          {FINAL_CTA.body}
         </p>
-        <p className="mt-3 max-w-[32rem] text-[0.98rem] leading-relaxed text-paper/70">
-          무료 진단은 회사·업무 정보를 입력하면 AI가 자동화 여지를 분석해 드립니다.
-          결과는 추정치이며, 상담으로 이어집니다.
-        </p>
-        <div className="mt-8">
-          <CtaLink
-            href="/diagnosis"
-            className="bg-paper text-ink hover:bg-white"
-          >
-            무료 자동화 진단
-          </CtaLink>
+        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <CtaLink href="/diagnosis">{FINAL_CTA.button}</CtaLink>
+          <span className="text-[0.85rem] text-ink-soft">{FINAL_CTA.note}</span>
         </div>
       </div>
     </section>

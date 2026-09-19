@@ -47,15 +47,20 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* ── 마케팅(랜딩) 전용 토큰 — components/marketing/* 에서만 사용, 라이트 전용 ── */
+  /* ── 마케팅(랜딩) 전용 토큰 — components/marketing/* 에서만 사용, 라이트 기본 + .wak-on-deep 스코프에서 어두운 표면용으로 재정의 ── */
   --color-paper: var(--wak-paper);
   --color-panel: var(--wak-panel);
+  --color-tint: var(--wak-tint);
   --color-ink: var(--wak-ink);
   --color-ink-soft: var(--wak-ink-soft);
   --color-line: var(--wak-line);
   --color-signal: var(--wak-signal);
   --color-resolved: var(--wak-resolved);
   --color-danger: var(--wak-danger);
+  --color-deep: var(--wak-deep);
+  --color-cta: var(--wak-cta);
+  --color-cta-hover: var(--wak-cta-hover);
+  --color-on-cta: var(--wak-on-cta);
   --font-display: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui,
     sans-serif;
   --font-flow: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
@@ -71,6 +76,31 @@
   --wak-resolved: #0c8b77;
   /* 오류 전용. 팔레트(청록·파랑) 밖의 산화철 계열 — paper 대비 6.1:1 */
   --wak-danger: #b32218;
+  --wak-tint: #eef1f7;
+  --wak-shadow-card: 0 1px 2px rgb(22 41 43 / 0.04), 0 12px 28px -20px rgb(22 41 43 / 0.22);
+  --wak-deep: #0f1f21;
+  --wak-cta: #1f3ce6;
+  --wak-cta-hover: #182fc0;
+  --wak-on-cta: #ffffff;
+}
+
+/*
+ * 어두운 표면 스코프. 이 클래스 안에서는 text-ink / text-ink-soft / border-line / text-signal /
+ * bg-panel / text-resolved / bg-cta 가 전부 어두운 배경용 값으로 다시 풀린다
+ * (@theme inline 이 유틸리티를 var(--wak-*) 참조로 남기기 때문). 배경은 bg-deep 으로 따로 준다.
+ * 대비는 _wak 검증 스크립트 기준 본문 4.5:1 이상.
+ */
+.wak-on-deep {
+  --wak-ink: #f5f6f2;
+  --wak-ink-soft: #b8c9c8;
+  --wak-line: rgb(255 255 255 / 0.34);
+  --wak-panel: rgb(255 255 255 / 0.06);
+  --wak-signal: #8ea0ff;
+  --wak-resolved: #7fe0cf;
+  --wak-cta: #3b5bff;
+  --wak-cta-hover: #2f4ef0;
+  --wak-on-cta: #ffffff;
+  --wak-shadow-card: none;
 }
 
 :root {

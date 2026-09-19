@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/marketing/hero";
-import { Problems } from "@/components/marketing/problems";
-import { BeforeAfter } from "@/components/marketing/before-after";
+import { Pain } from "@/components/marketing/pain";
 import { Services } from "@/components/marketing/services";
-import { Demos } from "@/components/marketing/demos";
-import { MidCta, FinalCta } from "@/components/marketing/cta-band";
 import { Process } from "@/components/marketing/process";
-import { Trust } from "@/components/marketing/trust";
+import { Demos } from "@/components/marketing/demos";
 import { Faq } from "@/components/marketing/faq";
+import { FinalCta } from "@/components/marketing/cta-band";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
@@ -41,30 +39,23 @@ const jsonLd = {
   ],
 };
 
+// 7섹션: 히어로 / 고민 / 서비스 / 진행 방식 / 데모 / FAQ / 마지막 CTA.
+// 각 섹션이 전폭 밴드(SectionBand)라 페이지 래퍼·스파인이 없다.
 export default function Home() {
   return (
-    <div className="relative mx-auto max-w-[1120px] px-5 pb-8 sm:px-8 lg:pr-8 lg:pl-16">
+    <>
       <script
         type="application/ld+json"
         // 정적 상수 직렬화 — 사용자 입력 없음.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* 커넥터 스파인 — 페이지 전체를 관통하는 워크플로 백본 (lg 이상) */}
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-8 hidden w-px bg-line lg:block"
-      />
-
       <Hero />
-      <Problems />
-      <BeforeAfter />
+      <Pain />
       <Services />
-      <Demos />
-      <MidCta />
       <Process />
-      <Trust />
+      <Demos />
       <Faq />
       <FinalCta />
-    </div>
+    </>
   );
 }
